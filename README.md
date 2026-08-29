@@ -122,10 +122,5 @@ MERATA/
 
 ---
 
-## 🎨 Desain Figma
-- [Figma Design File: Pendidikan - MERATA](https://www.figma.com/design/EV0zZ3ATGk9M1iGCK0LFX5/Pendidikan?node-id=31-1876&t=WXsPCj0kxWp056Ke-1)
-
----
-
 ## 📄 Lisensi
 Hak Cipta © 2026 MERATA Team. Dikembangkan untuk kemajuan dan pemerataan pendidikan di seluruh penjuru Indonesia.
