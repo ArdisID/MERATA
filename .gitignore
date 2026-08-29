@@ -2,6 +2,11 @@
 node_modules/
 frontend/node_modules/
 
+# Private Specs
+PRD.Md
+PRD.md
+prd.md
+
 # Production Build Output
 dist/
 frontend/dist/
