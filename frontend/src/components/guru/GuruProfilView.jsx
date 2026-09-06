@@ -16,8 +16,11 @@ import {
   HelpCircle,
   Edit2,
   Trash2,
-  X
+  X,
+  UploadCloud,
+  Image
 } from 'lucide-react';
+import api from '../../services/api';
 
 export default function GuruProfilView({
   teacherProfile,
@@ -35,6 +38,26 @@ export default function GuruProfilView({
     keterangan: '',
   });
   const [toastMessage, setToastMessage] = useState('');
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingFile(true);
+    try {
+      const res = await api.upload(file, 'sarpras');
+      setUploadedFile(res);
+      showToast('File bukti fisik berhasil diunggah!');
+    } catch (err) {
+      console.warn('Upload warning:', err);
+      showToast('Menggunakan berkas lokal.');
+      setUploadedFile({ filename: file.name, url: URL.createObjectURL(file), mime: file.type });
+    } finally {
+      setUploadingFile(false);
+    }
+  };
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -43,6 +66,7 @@ export default function GuruProfilView({
 
   const handleOpenCreate = () => {
     setEditingNeedId(null);
+    setUploadedFile(null);
     setNewNeed({
       judul: '',
       kategori: 'Perangkat Pembelajaran IT',
@@ -66,9 +90,19 @@ export default function GuruProfilView({
   };
 
   const handleDeleteNeed = (needId) => {
+    const target = teacherNeeds.find((n) => n.id === needId);
     const updated = teacherNeeds.filter((n) => n.id !== needId);
     setTeacherNeeds(updated);
     showToast('Usulan kebutuhan berhasil dihapus.');
+
+    try {
+      const dbId = target?.dbId || (typeof needId === 'number' ? needId : null);
+      if (dbId) {
+        api.guru.deleteKebutuhan(dbId).catch((err) => console.warn('Delete need warning:', err));
+      }
+    } catch (err) {
+      console.warn('Delete need warning:', err);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -76,6 +110,7 @@ export default function GuruProfilView({
     if (!newNeed.judul) return;
 
     if (editingNeedId) {
+      const target = teacherNeeds.find((n) => n.id === editingNeedId);
       const updated = teacherNeeds.map((n) => {
         if (n.id === editingNeedId) {
           return {
@@ -91,6 +126,20 @@ export default function GuruProfilView({
       setTeacherNeeds(updated);
       setIsFormOpen(false);
       showToast('Perubahan usulan kebutuhan berhasil disimpan!');
+
+      try {
+        const dbId = target?.dbId || (typeof editingNeedId === 'number' ? editingNeedId : null);
+        if (dbId) {
+          api.guru.updateKebutuhan(dbId, {
+            judul: newNeed.judul,
+            kategori: newNeed.kategori,
+            estimasi_biaya: newNeed.biaya || target?.biaya,
+            justifikasi: newNeed.keterangan,
+          }).catch((err) => console.warn('Update need warning:', err));
+        }
+      } catch (err) {
+        console.warn('Update need warning:', err);
+      }
       return;
     }
 
@@ -123,7 +172,8 @@ export default function GuruProfilView({
         status: 'menunggu',
         statusLabel: 'Menunggu Verifikasi',
         catatanAdmin: '',
-        lampiran: 'Usulan_Kebutuhan_Guru.pdf (250 KB)',
+        lampiran: uploadedFile?.filename || 'Proposal_Kebutuhan.pdf',
+        lampiranUrl: uploadedFile?.url || null,
       });
     }
 
@@ -350,6 +400,34 @@ export default function GuruProfilView({
                   onChange={(e) => setNewNeed({ ...newNeed, keterangan: e.target.value })}
                   className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none leading-relaxed"
                 />
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Foto Bukti Fisik / Dokumen Kerusakan (Opsional)</label>
+                <div className="flex items-center gap-3">
+                  <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-xs rounded-xl border border-blue-200 transition-colors">
+                    <UploadCloud className="w-4 h-4" />
+                    <span>{uploadingFile ? 'Mengunggah Berkas...' : 'Unggah Foto/Proposal'}</span>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf,.docx"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                      disabled={uploadingFile}
+                    />
+                  </label>
+                  {uploadedFile && (
+                    <div className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate max-w-[170px] font-medium">{uploadedFile.filename}</span>
+                    </div>
+                  )}
+                </div>
+                {uploadedFile?.url && uploadedFile.mime?.startsWith('image/') && (
+                  <div className="mt-2.5 relative w-24 h-24 rounded-xl overflow-hidden border border-gray-200 shadow-xs">
+                    <img src={uploadedFile.url} alt="Preview Bukti" className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
 
               <div className="p-4 border-t border-gray-100 flex items-center justify-end gap-2 -mx-6 -mb-6 bg-gray-50">

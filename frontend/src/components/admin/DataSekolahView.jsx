@@ -11,9 +11,12 @@ import {
   Calendar,
   Download,
   Printer,
-  X
+  X,
+  UploadCloud,
+  CheckCircle2
 } from 'lucide-react';
 import { exportToCSV, printFormattedReport } from '../../utils/exportUtils';
+import api from '../../services/api';
 
 export default function DataSekolahView({
   students,
@@ -36,6 +39,24 @@ export default function DataSekolahView({
   const [selectedClass, setSelectedClass] = useState(null);
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [isAddFacilityModalOpen, setIsAddFacilityModalOpen] = useState(false);
+  const [uploadedFacilityPhoto, setUploadedFacilityPhoto] = useState(null);
+  const [uploadingFacilityPhoto, setUploadingFacilityPhoto] = useState(false);
+
+  const handleFacilityPhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingFacilityPhoto(true);
+    try {
+      const res = await api.upload(file, 'sarpras');
+      setUploadedFacilityPhoto(res);
+    } catch (err) {
+      console.warn('Facility photo upload warning:', err);
+      setUploadedFacilityPhoto({ filename: file.name, url: URL.createObjectURL(file) });
+    } finally {
+      setUploadingFacilityPhoto(false);
+    }
+  };
 
   // New Student Form State
   const [newStudent, setNewStudent] = useState({
@@ -115,6 +136,21 @@ export default function DataSekolahView({
       kebutuhan: '',
       catatan: '',
     });
+
+    // Backend Sync
+    try {
+      api.admin.createSiswa({
+        nama: newStudent.nama,
+        nisn: newStudent.nisn,
+        gender: newStudent.gender,
+        kelas: newStudent.kelas,
+        status_bantuan: newStudent.statusBantuan,
+        kebutuhan: newStudent.kebutuhan,
+        catatan: newStudent.catatan
+      }).catch(err => console.warn('Sync student creation warning:', err));
+    } catch (e) {
+      console.warn('Sync student creation error:', e);
+    }
   };
 
   // Handle Add Facility
@@ -146,6 +182,22 @@ export default function DataSekolahView({
       kebutuhanTambahan: '',
       keterangan: '',
     });
+
+    // Backend Sync
+    try {
+      api.admin.createFasilitas({
+        nama: newFacility.nama,
+        lokasi: newFacility.lokasi,
+        kondisi: newFacility.kondisi,
+        jumlah_total: Number(newFacility.jumlahTotal) || 1,
+        jumlah_baik: Number(newFacility.jumlahBaik) || 1,
+        jumlah_rusak: Number(newFacility.jumlahRusak) || 0,
+        kebutuhan_tambahan: newFacility.kebutuhanTambahan,
+        keterangan: newFacility.keterangan
+      }).catch(err => console.warn('Sync facility creation warning:', err));
+    } catch (e) {
+      console.warn('Sync facility creation error:', e);
+    }
   };
 
   // Export CSV Handlers
@@ -1051,6 +1103,34 @@ export default function DataSekolahView({
                   onChange={(e) => setNewFacility({ ...newFacility, kebutuhanTambahan: e.target.value })}
                   className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none"
                 />
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Foto Bukti Fisik Sarpras (Opsional)</label>
+                <div className="flex items-center gap-3">
+                  <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-xs rounded-xl border border-blue-200 transition-colors">
+                    <UploadCloud className="w-4 h-4" />
+                    <span>{uploadingFacilityPhoto ? 'Mengunggah Foto...' : 'Unggah Foto Ruang/Sarpras'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFacilityPhotoUpload}
+                      disabled={uploadingFacilityPhoto}
+                    />
+                  </label>
+                  {uploadedFacilityPhoto && (
+                    <div className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate max-w-[170px] font-medium">{uploadedFacilityPhoto.filename}</span>
+                    </div>
+                  )}
+                </div>
+                {uploadedFacilityPhoto?.url && (
+                  <div className="mt-2.5 relative w-24 h-24 rounded-xl overflow-hidden border border-gray-200 shadow-xs">
+                    <img src={uploadedFacilityPhoto.url} alt="Preview Fasilitas" className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
 
               <div className="p-4 border-t border-gray-100 flex items-center justify-end gap-2 -mx-6 -mb-6 bg-gray-50">

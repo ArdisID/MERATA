@@ -15,6 +15,7 @@ import {
 import { mockQuizData } from '../../data/mockGuruData';
 import { triggerConfetti } from '../../utils/confettiUtils';
 import { sound } from '../../utils/audioUtils';
+import api from '../../services/api';
 
 export default function GuruQuizView({ students, setStudents }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -91,7 +92,7 @@ export default function GuruQuizView({ students, setStudents }) {
   const isPassed = finalScore >= mockQuizData.kkm;
 
   // Record score into student monitoring record
-  const handleRecordScoreToStudent = () => {
+  const handleRecordScoreToStudent = async () => {
     if (!selectedStudentId || !setStudents) return;
     sound.playClick();
 
@@ -99,13 +100,16 @@ export default function GuruQuizView({ students, setStudents }) {
     if (!targetStudent) return;
 
     const newAvg = Number(((targetStudent.nilaiRataRata + finalScore) / 2).toFixed(1));
+    const newCatatan = `Menyelesaikan Quiz "${mockQuizData.judul}" dengan skor ${finalScore}/100.`;
+    const newStatus = finalScore < 60 ? 'Perhatian Khusus' : targetStudent.statusKehadiran;
+
     const updated = students.map((s) => {
       if (s.id === selectedStudentId) {
         return {
           ...s,
           nilaiRataRata: newAvg,
-          catatan: `Menyelesaikan Quiz "${mockQuizData.judul}" dengan skor ${finalScore}/100.`,
-          statusKehadiran: finalScore < 60 ? 'Perhatian Khusus' : s.statusKehadiran,
+          catatan: newCatatan,
+          statusKehadiran: newStatus,
         };
       }
       return s;
@@ -114,6 +118,20 @@ export default function GuruQuizView({ students, setStudents }) {
     setStudents(updated);
     setToastMessage(`Skor ${finalScore} berhasil direkam ke rekam siswa ${targetStudent.nama}!`);
     setTimeout(() => setToastMessage(''), 3500);
+
+    // Sync to backend if authenticated
+    try {
+      const dbId = targetStudent.dbId || targetStudent.id;
+      if (dbId) {
+        await api.guru.updateSiswa(dbId, {
+          nilai_rata_rata: newAvg,
+          catatan: newCatatan,
+          status_kehadiran: newStatus
+        });
+      }
+    } catch (err) {
+      console.warn('Backend sync for quiz score kept local:', err);
+    }
   };
 
   return (

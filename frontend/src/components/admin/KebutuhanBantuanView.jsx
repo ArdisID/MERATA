@@ -19,7 +19,8 @@ import {
   Printer,
   X
 } from 'lucide-react';
-import { printFormattedReport, exportToCSV } from '../../utils/exportUtils';
+import { printFormattedReport, printOfficialBASTReport, exportToCSV } from '../../utils/exportUtils';
+import api from '../../services/api';
 
 export default function KebutuhanBantuanView({
   verifications,
@@ -30,7 +31,8 @@ export default function KebutuhanBantuanView({
   selectedVerification,
   setSelectedVerification,
   isVerifyModalOpen,
-  setIsVerifyModalOpen
+  setIsVerifyModalOpen,
+  schoolProfile
 }) {
   const [activeSubTab, setActiveSubTab] = useState('verifikasi'); // 'verifikasi' | 'status-bantuan'
   const [filterKategori, setFilterKategori] = useState('all');
@@ -56,8 +58,19 @@ export default function KebutuhanBantuanView({
     setTimeout(() => setToastMessage(''), 3500);
   };
 
+  const syncVerifToBackend = async (verifId, action, note) => {
+    const target = verifications.find((v) => v.id === verifId || v.dbId === verifId);
+    const dbId = target?.dbId || (typeof verifId === 'number' ? verifId : 1);
+    try {
+      await api.admin.updateVerifikasi(dbId, { action, catatan_admin: note });
+    } catch (e) {
+      console.warn('Backend verif update kept in local state:', e);
+    }
+  };
+
   // 1. Approve at School Level (Dana Sekolah / BOS)
   const handleApproveSchool = (verifId) => {
+    const note = adminNotes || 'Disetujui untuk dialokasikan melalui dana BOS Kinerja / RKAS.';
     const updated = verifications.map((v) => {
       if (v.id === verifId) {
         return {
@@ -65,7 +78,7 @@ export default function KebutuhanBantuanView({
           status: 'disetujui_sekolah',
           statusLabel: 'Disetujui Sekolah (RKAS)',
           badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-          catatanAdmin: adminNotes || 'Disetujui untuk dialokasikan melalui dana BOS Kinerja / RKAS.',
+          catatanAdmin: note,
         };
       }
       return v;
@@ -74,10 +87,12 @@ export default function KebutuhanBantuanView({
     setIsVerifyModalOpen(false);
     showToast(`Pengajuan #${verifId} berhasil disetujui untuk dianggarkan pada RKAS Sekolah.`);
     setAdminNotes('');
+    syncVerifToBackend(verifId, 'setujui', note);
   };
 
   // 2. Forward to Pemerintah / Dinas
   const handleForwardToPemda = (verifId) => {
+    const note = adminNotes || 'Kebutuhan melebihi anggaran BOS, diteruskan ke Dinas Pendidikan.';
     const updated = verifications.map((v) => {
       if (v.id === verifId) {
         return {
@@ -85,7 +100,7 @@ export default function KebutuhanBantuanView({
           status: 'diteruskan_pemda',
           statusLabel: 'Diteruskan ke Pemda/Dinas',
           badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
-          catatanAdmin: adminNotes || 'Kebutuhan melebihi anggaran BOS, diteruskan ke Dinas Pendidikan.',
+          catatanAdmin: note,
         };
       }
       return v;
@@ -94,10 +109,12 @@ export default function KebutuhanBantuanView({
     setIsVerifyModalOpen(false);
     showToast(`Pengajuan #${verifId} berhasil diteruskan ke Dinas Pendidikan untuk alokasi bantuan daerah.`);
     setAdminNotes('');
+    syncVerifToBackend(verifId, 'teruskan', note);
   };
 
   // 3. Request Revision
   const handleRequestRevision = (verifId) => {
+    const note = adminNotes || 'Mohon sertakan rincian spesifikasi teknis dan justifikasi kebutuhan.';
     const updated = verifications.map((v) => {
       if (v.id === verifId) {
         return {
@@ -105,7 +122,7 @@ export default function KebutuhanBantuanView({
           status: 'perlu_revisi',
           statusLabel: 'Perlu Perbaikan Data',
           badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
-          catatanAdmin: adminNotes || 'Mohon sertakan rincian spesifikasi teknis dan justifikasi kebutuhan.',
+          catatanAdmin: note,
         };
       }
       return v;
@@ -114,10 +131,12 @@ export default function KebutuhanBantuanView({
     setIsVerifyModalOpen(false);
     showToast(`Pengajuan #${verifId} dikembalikan ke pemohon untuk revisi kelengkapan dokumen.`);
     setAdminNotes('');
+    syncVerifToBackend(verifId, 'revisi', note);
   };
 
   // 4. Reject Request
   const handleReject = (verifId) => {
+    const note = adminNotes || 'Pengajuan belum memenuhi prioritas anggaran sekolah semester ini.';
     const updated = verifications.map((v) => {
       if (v.id === verifId) {
         return {
@@ -125,7 +144,7 @@ export default function KebutuhanBantuanView({
           status: 'ditolak',
           statusLabel: 'Ditolak',
           badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
-          catatanAdmin: adminNotes || 'Pengajuan belum memenuhi prioritas anggaran sekolah semester ini.',
+          catatanAdmin: note,
         };
       }
       return v;
@@ -134,6 +153,7 @@ export default function KebutuhanBantuanView({
     setIsVerifyModalOpen(false);
     showToast(`Pengajuan #${verifId} telah ditolak.`);
     setAdminNotes('');
+    syncVerifToBackend(verifId, 'tolak', note);
   };
 
   // 5. Confirm Shipment Receipt (BAST Handover)
@@ -157,27 +177,7 @@ export default function KebutuhanBantuanView({
 
   // 6. Print Official BAST Document
   const handlePrintBAST = (shipment) => {
-    const headers = [
-      { key: 'item', label: 'Item / Rincian Barang' },
-      { key: 'qty', label: 'Spesifikasi & Volume' },
-      { key: 'status', label: 'Kondisi Penerimaan' },
-      { key: 'lokasi', label: 'Penyimpanan' }
-    ];
-    const data = [
-      {
-        item: shipment.program || 'Paket Bantuan Sarpras',
-        qty: shipment.jumlahItem || 'Lengkap Sesuai Resi',
-        status: 'Baik & Berfungsi Normal 100%',
-        lokasi: 'Laboratorium & Ruang Inventaris SMPN 1 Merata'
-      }
-    ];
-    printFormattedReport(
-      'BERITA ACARA SERAH TERIMA (BAST) BANTUAN SARPRAS',
-      `Nomor Resi: ${shipment.ekspedisi || 'POS-DKI-2026'} • Sumber Dana: ${shipment.sumberDana || 'Pemerintah'}`,
-      headers,
-      data,
-      `Pada hari ini, barang/layanan bantuan telah diterima dalam keadaan lengkap, baik, dan siap digunakan untuk kegiatan belajar mengajar.`
-    );
+    printOfficialBASTReport(shipment, schoolProfile);
   };
 
   // 7. Export Verifications CSV
@@ -494,6 +494,34 @@ export default function KebutuhanBantuanView({
                   <strong className="text-sm text-blue-700">{selectedVerification.estimasiBiaya}</strong>
                 </div>
               </div>
+
+              {selectedVerification.lampiran && (
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-800 block text-xs truncate max-w-[220px]">
+                        {selectedVerification.lampiran}
+                      </span>
+                      <span className="text-[10px] text-slate-400">Bukti Fisik / Dokumen Terlampir</span>
+                    </div>
+                  </div>
+                  {selectedVerification.lampiranUrl ? (
+                    <a
+                      href={selectedVerification.lampiranUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold transition-colors"
+                    >
+                      Lihat Berkas
+                    </a>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 font-medium italic">Tervalidasi</span>
+                  )}
+                </div>
+              )}
 
               <div>
                 <label className="font-semibold text-slate-700 block mb-1">Catatan Verifikasi / Disposisi:</label>

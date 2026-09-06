@@ -32,6 +32,7 @@ import {
   mockPemerintahReports
 } from '../../data/mockPemerintahData';
 import { exportToCSV, printFormattedReport } from '../../utils/exportUtils';
+import api from '../../services/api';
 
 export default function PemerintahView({
   setCurrentRoute,
@@ -101,6 +102,32 @@ export default function PemerintahView({
     showToast(`Persetujuan alokasi bantuan untuk "${approvalModal.judul}" berhasil diterbitkan dan diteruskan ke logistik penyaluran.`);
   };
 
+  const handleRejectAidSubmit = async (verifId) => {
+    const note = aidForm.catatanDinas || 'Alokasi bantuan belum dapat disetujui pemda pada periode ini.';
+    const updated = verifications.map((v) => {
+      if (v.id === verifId) {
+        return {
+          ...v,
+          status: 'ditolak',
+          statusLabel: 'Ditolak Pemerintah Daerah',
+          catatanAdmin: note,
+        };
+      }
+      return v;
+    });
+    setVerifications(updated);
+    setApprovalModal(null);
+    showToast(`Pengajuan #${verifId} telah ditolak.`);
+
+    try {
+      const target = verifications.find((v) => v.id === verifId);
+      const dbId = target?.dbId || (typeof verifId === 'number' ? verifId : 1);
+      await api.pemerintah.rejectKebutuhan(dbId, { catatan: note });
+    } catch (e) {
+      console.warn('Reject aid sync warning:', e);
+    }
+  };
+
   const handlePublishMaterial = (e) => {
     e.preventDefault();
     if (!newMaterial.topik) return;
@@ -118,6 +145,22 @@ export default function PemerintahView({
     }
     setIsAddMaterialModalOpen(false);
     showToast(`Modul materi "${newMaterial.topik}" berhasil diterbitkan dan otomatis tersedia di akun seluruh Guru!`);
+
+    // Sync to Backend Laravel API
+    try {
+      api.pemerintah.createMateri({
+        jenjang: newMaterial.jenjang,
+        kelas: newMaterial.kelas,
+        mapel: newMaterial.mapel,
+        topik: newMaterial.topik,
+        author: newMaterial.author,
+        deskripsi: newMaterial.deskripsi,
+      }).catch((err) => {
+        console.warn('Sync materi to backend warning:', err);
+      });
+    } catch (err) {
+      console.warn('Sync materi error:', err);
+    }
   };
 
   // Export handlers
@@ -278,30 +321,30 @@ export default function PemerintahView({
             </span>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200/80">
+              <div className="w-6 h-6 rounded-lg bg-purple-600 text-white flex items-center justify-center text-xs font-bold">
+                DP
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-bold text-purple-950 leading-tight">Dinas Pendidikan</p>
+                <p className="text-[10px] text-purple-600 font-medium">Pengawas Provinsi</p>
+              </div>
+            </div>
+
             <button
               type="button"
-              onClick={() => setCurrentRoute('guru')}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold transition-colors cursor-pointer"
+              onClick={async () => {
+                try {
+                  await api.auth.logout();
+                } catch (e) {}
+                if (setCurrentRoute) setCurrentRoute('login');
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-rose-600 hover:bg-rose-50 border border-rose-200/70 rounded-xl transition-colors text-xs font-semibold cursor-pointer"
+              title="Keluar Akun"
             >
-              <GraduationCap className="w-3.5 h-3.5" />
-              <span>Web Guru</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentRoute('admin')}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold transition-colors cursor-pointer"
-            >
-              <School className="w-3.5 h-3.5" />
-              <span>Admin Sekolah</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentRoute('login')}
-              className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors text-xs font-semibold flex items-center gap-1 cursor-pointer"
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Keluar Akun</span>
             </button>
           </div>
         </header>
@@ -1061,21 +1104,30 @@ export default function PemerintahView({
                 />
               </div>
 
-              <div className="p-4 border-t border-slate-100 flex items-center justify-end gap-2 -mx-6 -mb-6 bg-slate-50/80">
+              <div className="p-4 border-t border-slate-100 flex items-center justify-between gap-2 -mx-6 -mb-6 bg-slate-50/80">
                 <button
                   type="button"
-                  onClick={() => setApprovalModal(null)}
-                  className="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold rounded-xl text-xs"
+                  onClick={() => handleRejectAidSubmit(approvalModal.id)}
+                  className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold rounded-xl text-xs border border-rose-200 transition-colors"
                 >
-                  Batal
+                  ✗ Tolak Pengajuan
                 </button>
-                <button
-                  type="button"
-                  onClick={() => handleApproveAidSubmit(approvalModal.id)}
-                  className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl text-xs shadow-xs transition-colors"
-                >
-                  Terbitkan Persetujuan Bantuan
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setApprovalModal(null)}
+                    className="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold rounded-xl text-xs"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApproveAidSubmit(approvalModal.id)}
+                    className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl text-xs shadow-xs transition-colors"
+                  >
+                    ✓ Terbitkan Persetujuan Bantuan
+                  </button>
+                </div>
               </div>
             </div>
           </div>

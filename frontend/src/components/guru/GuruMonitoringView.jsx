@@ -17,6 +17,7 @@ import {
   Check
 } from 'lucide-react';
 import { exportToCSV, printFormattedReport } from '../../utils/exportUtils';
+import api from '../../services/api';
 
 export default function GuruMonitoringView({
   students,
@@ -63,9 +64,27 @@ export default function GuruMonitoringView({
     const updated = students.map((s) => (s.id === editForm.id ? editForm : s));
     setStudents(updated);
     setSelectedStudent(null);
-    setEditForm(null);
     setToastMessage(`Data nilai dan catatan ${editForm.nama} berhasil diperbarui!`);
     setTimeout(() => setToastMessage(''), 3500);
+
+    // Sync to Backend Laravel API
+    try {
+      const dbId = editForm.dbId || (typeof editForm.id === 'number' ? editForm.id : null);
+      if (dbId) {
+        api.guru.updateSiswa(dbId, {
+          kehadiran: editForm.kehadiran,
+          status_kehadiran: editForm.statusKehadiran,
+          nilai_rata_rata: editForm.nilaiRataRata,
+          catatan: editForm.catatan,
+          kebutuhan: editForm.kebutuhan,
+          status_bantuan: editForm.statusBantuan
+        }).catch(err => console.warn('Sync student update error:', err));
+      }
+    } catch (err) {
+      console.warn('Sync student update error:', err);
+    }
+
+    setEditForm(null);
   };
 
   // Export to CSV

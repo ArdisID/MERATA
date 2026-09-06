@@ -48,7 +48,7 @@ export const initialStudents = [
     nilaiRataRata: 64.5,
     statusBantuan: 'Penerima KIP',
     bantuanBadge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    kebutuhan: 'Sepatu sekolah & Modul cetak offline',
+    kebutuhan: 'Sepatu sekolah & Perlengkapan belajar',
     catatan: 'Tercatat absen berturut-turut 4 hari tanpa surat keterangan.',
     riwayatBantuan: [
       { tahun: '2025', jenis: 'KIP Fase D', nilai: 'Rp 750.000', status: 'Tersalurkan' },

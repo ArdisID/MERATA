@@ -6,7 +6,6 @@ import {
   FileText,
   HelpCircle,
   Presentation,
-  Download,
   ChevronRight,
   PlayCircle,
   CheckCircle2,
@@ -22,6 +21,7 @@ import {
   Layers
 } from 'lucide-react';
 import { mockGuruClasses, mockPecahanMaterial } from '../../data/mockGuruData';
+import api from '../../services/api';
 
 export default function GuruKelasView({
   setActiveTab,
@@ -33,7 +33,7 @@ export default function GuruKelasView({
   const [selectedClass, setSelectedClass] = useState(mockGuruClasses[0]); // Default Kelas 5A
   const [selectedTopicId, setSelectedTopicId] = useState('MAT-001');
   const [selectedSubmateri, setSelectedSubmateri] = useState(mockPecahanMaterial.submateri[0]);
-  const [activeContentTab, setActiveContentTab] = useState('materi'); // 'materi' | 'video' | 'soal' | 'slides' | 'offline'
+  const [activeContentTab, setActiveContentTab] = useState('materi'); // 'materi' | 'video' | 'soal' | 'slides'
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   // Daily Attendance Sheet State
@@ -115,6 +115,25 @@ export default function GuruKelasView({
     setIsAttendanceModalOpen(false);
     setAttendanceToast(true);
     setTimeout(() => setAttendanceToast(false), 3500);
+
+    // Sync to Backend Laravel API
+    try {
+      const presensiPayload = Object.entries(attendanceRecords).map(([studentId, statusChar]) => {
+        const student = students.find((s) => s.id === studentId || s.dbId === studentId);
+        const statusMap = { H: 'hadir', I: 'izin', S: 'sakit', A: 'alpa' };
+        return {
+          siswa_id: student?.dbId || (parseInt(String(studentId).replace('SIS-', ''), 10) || 1),
+          status: statusMap[statusChar] || 'hadir',
+        };
+      });
+
+      const kelasId = selectedClass?.dbId || 1;
+      api.guru.submitPresensi(kelasId, { presensi: presensiPayload }).catch((err) => {
+        console.warn('Sync presensi to backend warning:', err);
+      });
+    } catch (err) {
+      console.warn('Sync presensi error:', err);
+    }
   };
 
   // Summary of presence
@@ -365,18 +384,6 @@ export default function GuruKelasView({
               <Presentation className="w-3.5 h-3.5" />
               <span>Slide Presentasi</span>
             </button>
-
-            <button
-              onClick={() => setActiveContentTab('offline')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeContentTab === 'offline'
-                  ? 'bg-blue-50 text-blue-600 shadow-xs'
-                  : 'text-gray-500 hover:bg-gray-100'
-              }`}
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Materi Offline</span>
-            </button>
           </div>
 
           {/* TAB 1: MATERI */}
@@ -514,32 +521,6 @@ export default function GuruKelasView({
                     Slide Selanjutnya →
                   </button>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 5: OFFLINE */}
-          {activeContentTab === 'offline' && (
-            <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 text-xs space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
-                  <FileText className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-sm text-gray-900">{selectedSubmateri.materiOfflinePdf}</h3>
-                  <p className="text-gray-500">Materi siap cetak dan dibagikan secara offline untuk sekolah dengan keterbatasan internet.</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => alert(`Mengunduh berkas offline: ${selectedSubmateri.materiOfflinePdf}`)}
-                  className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors flex items-center gap-2 cursor-pointer"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Unduh Modul PDF Offline</span>
-                </button>
               </div>
             </div>
           )}

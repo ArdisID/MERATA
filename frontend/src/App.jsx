@@ -1,5 +1,15 @@
-import React, { useState } from 'react';
-import { WifiOff } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import api from './services/api';
+import {
+  adaptSiswa,
+  adaptGuru,
+  adaptKelas,
+  adaptFasilitas,
+  adaptVerifikasi,
+  adaptTeacherNeed,
+  adaptShipment,
+  adaptSchoolProfile
+} from './services/adapters';
 
 // Authentication / Landing
 import LoginPage from './components/auth/LoginPage';
@@ -60,9 +70,6 @@ export default function App() {
   // Global Search
   const [globalSearch, setGlobalSearch] = useState('');
 
-  // 3T Offline Mode Simulator State
-  const [isOffline3T, setIsOffline3T] = useState(false);
-
   // Persistent Shared State across all 3 portals
   const [schoolProfile, setSchoolProfile] = useState(initialSchoolProfile);
   const [students, setStudents] = useState(initialStudents);
@@ -81,12 +88,122 @@ export default function App() {
   const [selectedVerification, setSelectedVerification] = useState(null);
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
 
+  // Authenticated user state
+  const [currentUser, setCurrentUser] = useState(api.getUser());
+
+  // Load data for specific portal role from Laravel API
+  const loadPortalData = useCallback(async (role) => {
+    if (!role || role === 'login') return;
+    try {
+      if (role === 'guru') {
+        const [profilRes, monitoringRes] = await Promise.allSettled([
+          api.guru.getProfil(),
+          api.guru.getMonitoring()
+        ]);
+        if (profilRes.status === 'fulfilled' && profilRes.value) {
+          const { profil, kebutuhan } = profilRes.value;
+          if (profil) {
+            setTeacherProfile((prev) => ({
+              ...prev,
+              nama: profil.nama || prev.nama,
+              nip: profil.nip || prev.nip,
+              mapel: profil.mapel || prev.mapel,
+              sekolah: profil.sekolah?.nama || prev.sekolah,
+              poinKontribusi: Number(profil.poin_kontribusi) || prev.poinKontribusi
+            }));
+          }
+          if (Array.isArray(kebutuhan) && kebutuhan.length > 0) {
+            setTeacherNeeds(kebutuhan.map(adaptTeacherNeed));
+          }
+        }
+        if (monitoringRes.status === 'fulfilled' && Array.isArray(monitoringRes.value)) {
+          setStudents(monitoringRes.value.map(adaptSiswa));
+        }
+      } else if (role === 'admin') {
+        const [siswaRes, guruRes, kelasRes, fasilRes, verifRes, bantuanRes, profilRes] = await Promise.allSettled([
+          api.admin.getSiswa(),
+          api.admin.getGuru(),
+          api.admin.getKelas(),
+          api.admin.getFasilitas(),
+          api.admin.getVerifikasi(),
+          api.admin.getBantuan(),
+          api.admin.getProfilSekolah()
+        ]);
+        if (siswaRes.status === 'fulfilled' && Array.isArray(siswaRes.value)) {
+          setStudents(siswaRes.value.map(adaptSiswa));
+        }
+        if (guruRes.status === 'fulfilled' && Array.isArray(guruRes.value)) {
+          setTeachers(guruRes.value.map(adaptGuru));
+        }
+        if (kelasRes.status === 'fulfilled' && Array.isArray(kelasRes.value)) {
+          setClasses(kelasRes.value.map(adaptKelas));
+        }
+        if (fasilRes.status === 'fulfilled' && Array.isArray(fasilRes.value)) {
+          setFacilities(fasilRes.value.map(adaptFasilitas));
+        }
+        if (verifRes.status === 'fulfilled' && Array.isArray(verifRes.value)) {
+          setVerifications(verifRes.value.map(adaptVerifikasi));
+        }
+        if (bantuanRes.status === 'fulfilled' && Array.isArray(bantuanRes.value)) {
+          setShipments(bantuanRes.value.map(adaptShipment));
+        }
+        if (profilRes.status === 'fulfilled' && profilRes.value) {
+          setSchoolProfile((prev) => adaptSchoolProfile(profilRes.value, prev));
+        }
+      } else if (role === 'pemerintah') {
+        const [siswaRes, kebutuhanRes] = await Promise.allSettled([
+          api.pemerintah.getSiswa(),
+          api.pemerintah.getKebutuhan()
+        ]);
+        if (siswaRes.status === 'fulfilled' && Array.isArray(siswaRes.value)) {
+          setStudents(siswaRes.value.map(adaptSiswa));
+        }
+        if (kebutuhanRes.status === 'fulfilled' && Array.isArray(kebutuhanRes.value)) {
+          setVerifications(kebutuhanRes.value.map(adaptVerifikasi));
+        }
+      }
+    } catch (err) {
+      console.warn('API sync warning, keeping cached data:', err);
+    }
+  }, []);
+
+  // Check existing session on mount
+  useEffect(() => {
+    const verifySession = async () => {
+      const token = api.getToken();
+      if (token) {
+        try {
+          const me = await api.auth.me();
+          if (me && me.role) {
+            setCurrentUser(me);
+            setCurrentRoute(me.role);
+            loadPortalData(me.role);
+          }
+        } catch (e) {
+          console.warn('Session check warning:', e.message);
+        }
+      }
+    };
+    verifySession();
+  }, [loadPortalData]);
+
+  // Navigate & Logout Coordinator
+  const handleNavigateRoute = (newRoute) => {
+    if (newRoute === 'login') {
+      api.auth.logout();
+      setCurrentUser(null);
+    } else {
+      loadPortalData(newRoute);
+    }
+    setCurrentRoute(newRoute);
+  };
+
   // ================= THE LIVE 3-ROLE ASSISTANCE LIFECYCLE LOOP =================
   
   // 1. Teacher submits a new need in Guru portal
-  const handleAddNewNeedFromGuru = (newVerifItem) => {
+  const handleAddNewNeedFromGuru = async (newVerifItem) => {
+    // Optimistic local state update
     setVerifications([newVerifItem, ...verifications]);
-    // Also record in teacher's own history
     const teacherItem = {
       id: `GUR-NEED-00${teacherNeeds.length + 1}`,
       judul: newVerifItem.judul,
@@ -95,18 +212,36 @@ export default function App() {
       status: 'Menunggu Verifikasi Sekolah',
       badge: 'bg-amber-50 text-amber-700 border-amber-200',
       estimasi: newVerifItem.estimasiBiaya,
-      keterangan: newVerifItem.alasan,
+      keterangan: newVerifItem.alasan || newVerifItem.justifikasi,
     };
     setTeacherNeeds([teacherItem, ...teacherNeeds]);
+
+    // Backend API Sync
+    try {
+      const res = await api.guru.createKebutuhan({
+        judul: newVerifItem.judul,
+        kategori: newVerifItem.kategori,
+        estimasi_biaya: newVerifItem.estimasiBiaya,
+        justifikasi: newVerifItem.alasan || newVerifItem.justifikasi
+      });
+      if (res?.verifikasi) {
+        setVerifications((prev) => [
+          adaptVerifikasi(res.verifikasi),
+          ...prev.filter((v) => v.id !== newVerifItem.id)
+        ]);
+      }
+    } catch (err) {
+      console.warn('Backend sync for new need kept local:', err);
+    }
   };
 
   // 2. Government approves aid & allocates shipment
-  const handleApproveAidFromPemerintah = (verifId, aidData) => {
-    const targetVerif = verifications.find((v) => v.id === verifId);
+  const handleApproveAidFromPemerintah = async (verifId, aidData) => {
+    const targetVerif = verifications.find((v) => v.id === verifId || v.dbId === verifId);
 
     // Update Verification State
     const updatedVerifs = verifications.map((v) => {
-      if (v.id === verifId) {
+      if (v.id === verifId || v.dbId === verifId) {
         return {
           ...v,
           status: 'disetujui_pemda',
@@ -146,16 +281,65 @@ export default function App() {
       return tn;
     });
     setTeacherNeeds(updatedTeacherNeeds);
+
+    // Backend API Sync
+    try {
+      const dbId = targetVerif?.dbId || (typeof verifId === 'number' ? verifId : 1);
+      await api.pemerintah.approveKebutuhan(dbId, {
+        jumlah_alokasi: aidData.jumlahAlokasi,
+        catatan_dinas: aidData.catatanDinas
+      });
+    } catch (err) {
+      console.warn('Backend sync for aid approval kept local:', err);
+    }
   };
 
   const pendingVerificationCount = verifications.filter((v) => v.status === 'menunggu').length;
+
+  // Dynamic live notifications for Admin
+  const adminLiveNotifications = useMemo(() => {
+    return verifications.slice(0, 6).map((v, idx) => {
+      let type = 'info';
+      if (v.status === 'diajukan_ke_pemda' || v.urgensi === 'Tinggi') type = 'urgent';
+      else if (v.status === 'disetujui_pemda') type = 'success';
+      else if (v.status === 'ditolak') type = 'warning';
+
+      return {
+        id: `admin-notif-${v.id || idx}`,
+        title: v.judul || 'Pengajuan Bantuan Sarpras',
+        desc: `${v.diajukanOleh || 'Guru'} - ${v.statusLabel || v.status}`,
+        time: v.tanggal || 'Hari ini',
+        type,
+        read: false,
+      };
+    });
+  }, [verifications]);
+
+  // Dynamic live notifications for Guru
+  const guruLiveNotifications = useMemo(() => {
+    return teacherNeeds.slice(0, 6).map((item, idx) => {
+      let type = 'info';
+      if (item.status?.toLowerCase().includes('disetujui')) type = 'success';
+      else if (item.status?.toLowerCase().includes('menunggu')) type = 'urgent';
+
+      return {
+        id: `guru-notif-${item.id || idx}`,
+        title: item.judul || 'Status Usulan Bantuan',
+        desc: `${item.status}. ${item.keterangan ? item.keterangan.slice(0, 45) + '...' : ''}`,
+        time: item.tanggal || 'Hari ini',
+        type,
+        read: false,
+      };
+    });
+  }, [teacherNeeds]);
 
   // ================= 1. LOGIN PORTAL =================
   if (currentRoute === 'login') {
     return (
       <LoginPage
-        onLoginSuccess={(role) => {
-          setCurrentRoute(role);
+        onLoginSuccess={(role, user) => {
+          if (user) setCurrentUser(user);
+          handleNavigateRoute(role);
         }}
       />
     );
@@ -165,24 +349,6 @@ export default function App() {
   if (currentRoute === 'guru') {
     return (
       <div className="flex h-screen bg-gray-50 text-gray-800 font-sans overflow-hidden flex-col">
-        {/* 3T Offline Banner */}
-        {isOffline3T && (
-          <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white px-4 py-2 text-xs font-semibold flex items-center justify-between shadow-xs shrink-0 animate-in slide-in-from-top duration-200">
-            <div className="flex items-center gap-2">
-              <WifiOff className="w-4 h-4 text-amber-200" />
-              <span>
-                <strong>Simulasi Mode Offline 3T Aktif</strong> — Seluruh modul materi kurikulum, game edukasi, dan quiz tersimpan di cache lokal sekolah & dapat digunakan tanpa koneksi internet.
-              </span>
-            </div>
-            <button
-              onClick={() => setIsOffline3T(false)}
-              className="px-2 py-0.5 bg-white/20 hover:bg-white/30 rounded text-[11px] font-bold"
-            >
-              Kembalikan Online
-            </button>
-          </div>
-        )}
-
         <div className="flex flex-1 min-h-0 overflow-hidden">
           <GuruSidebar
             activeTab={guruActiveTab}
@@ -198,10 +364,9 @@ export default function App() {
               globalSearch={globalSearch}
               setGlobalSearch={setGlobalSearch}
               currentRoute={currentRoute}
-              setCurrentRoute={setCurrentRoute}
+              setCurrentRoute={handleNavigateRoute}
               teacherProfile={teacherProfile}
-              isOffline3T={isOffline3T}
-              setIsOffline3T={setIsOffline3T}
+              liveNotifications={guruLiveNotifications}
             />
 
             <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
@@ -260,24 +425,6 @@ export default function App() {
   if (currentRoute === 'admin') {
     return (
       <div className="flex h-screen bg-gray-50 text-gray-800 font-sans overflow-hidden flex-col">
-        {/* 3T Offline Banner */}
-        {isOffline3T && (
-          <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white px-4 py-2 text-xs font-semibold flex items-center justify-between shadow-xs shrink-0 animate-in slide-in-from-top duration-200">
-            <div className="flex items-center gap-2">
-              <WifiOff className="w-4 h-4 text-amber-200" />
-              <span>
-                <strong>Simulasi Mode Offline 3T Aktif</strong> — Sinkronisasi data Dapodik & verifikasi tersimpan di server lokal sekolah (Local Edge Storage).
-              </span>
-            </div>
-            <button
-              onClick={() => setIsOffline3T(false)}
-              className="px-2 py-0.5 bg-white/20 hover:bg-white/30 rounded text-[11px] font-bold"
-            >
-              Kembalikan Online
-            </button>
-          </div>
-        )}
-
         <div className="flex flex-1 min-h-0 overflow-hidden">
           <AdminSidebar
             activeTab={adminActiveTab}
@@ -293,9 +440,8 @@ export default function App() {
               globalSearch={globalSearch}
               setGlobalSearch={setGlobalSearch}
               notificationCount={pendingVerificationCount}
-              setCurrentRoute={setCurrentRoute}
-              isOffline3T={isOffline3T}
-              setIsOffline3T={setIsOffline3T}
+              setCurrentRoute={handleNavigateRoute}
+              liveNotifications={adminLiveNotifications}
             />
 
             <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
@@ -334,6 +480,7 @@ export default function App() {
                   setSelectedVerification={setSelectedVerification}
                   isVerifyModalOpen={isVerifyModalOpen}
                   setIsVerifyModalOpen={setIsVerifyModalOpen}
+                  schoolProfile={schoolProfile}
                 />
               )}
 
@@ -354,7 +501,7 @@ export default function App() {
   if (currentRoute === 'pemerintah') {
     return (
       <PemerintahView
-        setCurrentRoute={setCurrentRoute}
+        setCurrentRoute={handleNavigateRoute}
         verifications={verifications}
         setVerifications={setVerifications}
         materials={materials}

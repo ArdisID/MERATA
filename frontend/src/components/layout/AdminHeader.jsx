@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
   Bell,
@@ -8,14 +8,12 @@ import {
   AlertTriangle,
   FileText,
   ChevronDown,
-  GraduationCap,
-  School,
-  Building2,
   LogOut,
   Check,
-  Wifi,
-  WifiOff
+  User,
+  X
 } from 'lucide-react';
+import api from '../../services/api';
 
 export default function AdminHeader({
   setSidebarOpen,
@@ -23,14 +21,13 @@ export default function AdminHeader({
   setGlobalSearch,
   notificationCount = 3,
   setCurrentRoute,
-  isOffline3T,
-  setIsOffline3T
+  liveNotifications
 }) {
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showRoleMenu, setShowRoleMenu] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(notificationCount);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
-  const [notifications, setNotifications] = useState([
+  const initialItems = [
     {
       id: 1,
       title: 'Pengajuan Sarpras Baru',
@@ -55,11 +52,21 @@ export default function AdminHeader({
       type: 'success',
       read: false,
     },
-  ]);
+  ];
+
+  const [notifications, setNotifications] = useState(initialItems);
+
+  // Sync with live notifications if provided
+  useEffect(() => {
+    if (liveNotifications && liveNotifications.length > 0) {
+      setNotifications(liveNotifications);
+    }
+  }, [liveNotifications]);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const handleMarkAllRead = () => {
     setNotifications(notifications.map((n) => ({ ...n, read: true })));
-    setUnreadCount(0);
   };
 
   return (
@@ -89,77 +96,6 @@ export default function AdminHeader({
 
       {/* Right Action Icons & Profile */}
       <div className="flex items-center gap-2 sm:gap-3 pl-4 relative">
-        {/* Offline 3T Simulator Toggle */}
-        <button
-          type="button"
-          onClick={() => setIsOffline3T && setIsOffline3T(!isOffline3T)}
-          className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-            isOffline3T
-              ? 'bg-amber-500 text-white border-amber-600 shadow-xs animate-pulse'
-              : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-          }`}
-          title="Klik untuk mensimulasikan kondisi sekolah 3T tanpa internet"
-        >
-          {isOffline3T ? <WifiOff className="w-3.5 h-3.5" /> : <Wifi className="w-3.5 h-3.5" />}
-          <span>{isOffline3T ? 'Mode Offline 3T' : 'Online'}</span>
-        </button>
-
-        {/* Role Switcher Button */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setShowRoleMenu(!showRoleMenu)}
-            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-colors text-xs font-bold cursor-pointer"
-          >
-            <School className="w-4 h-4" />
-            <span>Admin Sekolah</span>
-            <ChevronDown className="w-3.5 h-3.5 opacity-60" />
-          </button>
-
-          {showRoleMenu && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-xs">
-              <div className="px-3 pb-2 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase">
-                Ganti Peran / Portal
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (setCurrentRoute) setCurrentRoute('guru');
-                  setShowRoleMenu(false);
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 font-bold transition-colors text-left cursor-pointer"
-              >
-                <GraduationCap className="w-4 h-4 text-blue-600" />
-                <span>Pindah ke Web Guru</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (setCurrentRoute) setCurrentRoute('pemerintah');
-                  setShowRoleMenu(false);
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700 font-bold transition-colors text-left cursor-pointer"
-              >
-                <Building2 className="w-4 h-4 text-purple-600" />
-                <span>Pindah ke Web Pemerintah</span>
-              </button>
-              <div className="pt-1 mt-1 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (setCurrentRoute) setCurrentRoute('login');
-                    setShowRoleMenu(false);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-rose-600 hover:bg-rose-50 font-bold transition-colors text-left cursor-pointer"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Keluar Akun (Logout)</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* Notification Bell with Dropdown */}
         <div className="relative">
           <button
@@ -237,26 +173,121 @@ export default function AdminHeader({
         {/* Settings Icon */}
         <button
           type="button"
-          onClick={() => alert('Panel Pengaturan Sistem Aktif')}
+          onClick={() => setShowSettingsModal(true)}
           className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
           title="Pengaturan Sistem"
         >
           <Settings className="w-5 h-5" />
         </button>
 
+        {/* Settings Modal */}
+        {showSettingsModal && (
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
+            <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-gray-100 p-6 space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <Settings className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-sm">Pengaturan Sistem</h3>
+                    <p className="text-[11px] text-gray-400">MERATA Multi-Portal Platform</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowSettingsModal(false)}
+                  className="p-1 text-gray-400 hover:text-gray-600 rounded-lg"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div className="p-3 bg-gray-50 rounded-2xl flex items-center justify-between">
+                  <span className="text-gray-600 font-medium">Status API Server</span>
+                  <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    Terhubung (Port 8000)
+                  </span>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-2xl flex items-center justify-between">
+                  <span className="text-gray-600 font-medium">Autentikasi</span>
+                  <span className="font-bold text-gray-800">Laravel Sanctum</span>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-2xl flex items-center justify-between">
+                  <span className="text-gray-600 font-medium">Mode Aplikasi</span>
+                  <span className="font-bold text-blue-600">Pure Web SaaS (Online)</span>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-2xl flex items-center justify-between">
+                  <span className="text-gray-600 font-medium">Versi Rilis</span>
+                  <span className="font-bold text-gray-800">v1.0.0 Production</span>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSettingsModal(false)}
+                  className="w-full py-2.5 bg-gray-900 hover:bg-black text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                >
+                  Tutup Panel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block" />
 
-        {/* User Avatar & Title */}
-        <div className="flex items-center gap-3 p-1 rounded-full hover:bg-gray-50 transition-colors cursor-pointer">
-          <img
-            src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120"
-            alt="Avatar Operator"
-            className="w-8 h-8 rounded-full object-cover ring-2 ring-gray-100"
-          />
-          <div className="hidden md:block text-left pr-1">
-            <p className="text-xs font-bold text-gray-900 leading-tight">Admin Sekolah</p>
-            <p className="text-[11px] text-gray-400 font-medium">Operator Utama</p>
-          </div>
+        {/* User Profile & Logout Menu */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="flex items-center gap-3 p-1 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer text-left"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120"
+              alt="Avatar Operator"
+              className="w-8 h-8 rounded-full object-cover ring-2 ring-emerald-100"
+            />
+            <div className="hidden md:block text-left pr-1">
+              <p className="text-xs font-bold text-gray-900 leading-tight">Admin Sekolah</p>
+              <p className="text-[11px] text-gray-400 font-medium">Operator Utama</p>
+            </div>
+            <ChevronDown className="w-3.5 h-3.5 text-gray-400 hidden md:block" />
+          </button>
+
+          {showUserMenu && (
+            <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-xs">
+              <div className="px-3.5 py-2.5 border-b border-gray-100">
+                <p className="font-bold text-gray-900">Admin Dapodik</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">admin@merata.id</p>
+                <div className="mt-1.5 flex items-center gap-1.5">
+                  <span className="inline-block px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-semibold">
+                    Administrator
+                  </span>
+                  <span className="text-[10px] text-gray-400">Tata Usaha & Sarpras</span>
+                </div>
+              </div>
+              <div className="p-1">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await api.auth.logout();
+                    } catch (e) {}
+                    if (setCurrentRoute) setCurrentRoute('login');
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-rose-600 hover:bg-rose-50 rounded-xl font-semibold transition-colors text-left cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Keluar Akun (Logout)</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

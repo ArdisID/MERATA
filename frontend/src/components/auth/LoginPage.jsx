@@ -7,16 +7,19 @@ import {
   Eye,
   EyeOff,
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
+import api from '../../services/api';
 
 export default function LoginPage({ onLoginSuccess }) {
   const [activeTab, setActiveTab] = useState('guru'); // 'guru' | 'admin' | 'pemerintah'
   const [email, setEmail] = useState('guru@merata.id');
-  const [password, setPassword] = useState('password123');
+  const [password, setPassword] = useState('password');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const roleConfig = {
     guru: {
@@ -29,42 +32,68 @@ export default function LoginPage({ onLoginSuccess }) {
       title: 'Admin',
       welcome: 'Masuk ke Akun Admin',
       subtitle: 'Kelola data sekolah, fasilitas, dan verifikasi kebutuhan.',
-      defaultEmail: 'admin@smpn1merata.sch.id',
+      defaultEmail: 'admin@merata.id',
     },
     pemerintah: {
       title: 'Pemerintah',
       welcome: 'Masuk ke Akun Pemerintah',
       subtitle: 'Pantau pemetaan pendidikan dan persetujuan bantuan dinas.',
-      defaultEmail: 'dinas@disdik.jakarta.go.id',
+      defaultEmail: 'pemerintah@merata.id',
     },
   };
 
   const handleTabChange = (role) => {
     setActiveTab(role);
     setEmail(roleConfig[role].defaultEmail);
+    setPassword('password');
+    setErrorMessage('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
+    setErrorMessage('');
+    try {
+      const res = await api.auth.login(email, password);
       setIsLoading(false);
       if (onLoginSuccess) {
-        onLoginSuccess(activeTab);
+        onLoginSuccess(res.user?.role || activeTab, res.user);
       }
-    }, 400);
+    } catch (err) {
+      console.warn('Backend login attempt failed:', err);
+      if (err.isNetworkError) {
+        setErrorMessage('Server backend belum terhubung. Menggunakan mode demonstrasi.');
+        setTimeout(() => {
+          setIsLoading(false);
+          if (onLoginSuccess) onLoginSuccess(activeTab);
+        }, 600);
+      } else {
+        setIsLoading(false);
+        setErrorMessage(err.message || 'Email atau kata sandi tidak sesuai.');
+      }
+    }
   };
 
-  const handleQuickDemo = (role) => {
+  const handleQuickDemo = async (role) => {
     setActiveTab(role);
-    setEmail(roleConfig[role].defaultEmail);
+    const targetEmail = roleConfig[role].defaultEmail;
+    setEmail(targetEmail);
+    setPassword('password');
     setIsLoading(true);
-    setTimeout(() => {
+    setErrorMessage('');
+    try {
+      const res = await api.auth.login(targetEmail, 'password');
+      setIsLoading(false);
+      if (onLoginSuccess) {
+        onLoginSuccess(res.user?.role || role, res.user);
+      }
+    } catch (err) {
+      console.warn('Quick demo API login fallback:', err);
       setIsLoading(false);
       if (onLoginSuccess) {
         onLoginSuccess(role);
       }
-    }, 250);
+    }
   };
 
   return (
@@ -180,6 +209,12 @@ export default function LoginPage({ onLoginSuccess }) {
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {errorMessage && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
             {/* Email Field */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-700 block">

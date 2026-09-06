@@ -138,8 +138,7 @@ Komponen Pecahan:
         { slideNo: 1, judul: 'Definisi Pecahan', konten: 'Pecahan = Bagian dari satu benda utuh yang dibagi sama besar.' },
         { slideNo: 2, judul: 'Struktur: Pembilang / Penyebut', konten: 'Pembilang (atas) = Bagian yang diambil\nPenyebut (bawah) = Total bagian utuh.' },
         { slideNo: 3, judul: 'Contoh Visual Pizza', konten: '1 loyang pizza 8 potong. Jika tersisa 5 potong, maka pecahannya 5/8.' }
-      ],
-      materiOfflinePdf: 'Modul_Ajar_Pecahan_Dasar_Fase_C.pdf (2.4 MB)'
+      ]
     },
     {
       id: 'sub-2',
@@ -179,8 +178,7 @@ Mengubah Pecahan ke Desimal:
       slides: [
         { slideNo: 1, judul: 'Pecahan Murni vs Tidak Murni', konten: '3/5 (Murni) | 7/3 (Tidak Murni = bisa jadi pecahan campuran).' },
         { slideNo: 2, judul: 'Konversi ke Desimal', konten: 'Penyebut dijadikan 10, 100, atau 1000.' }
-      ],
-      materiOfflinePdf: 'Konversi_Pecahan_Desimal_Lengkap.pdf (1.8 MB)'
+      ]
     },
     {
       id: 'sub-3',
@@ -217,8 +215,7 @@ Cara mengubah 7/3 menjadi pecahan campuran:
       ],
       slides: [
         { slideNo: 1, judul: 'Konsep Pecahan Campuran', konten: 'Ada bagian utuh + ada bagian sisa potongan.' }
-      ],
-      materiOfflinePdf: 'Latihan_Pecahan_Campuran.pdf (1.5 MB)'
+      ]
     },
     {
       id: 'sub-4',
@@ -258,8 +255,7 @@ Karena 8 < 9, maka 2/3 < 3/4.`,
       ],
       slides: [
         { slideNo: 1, judul: 'Aturan Perbandingan Pecahan', konten: 'Penyebut sama = lihat atas. Penyebut beda = kali silang.' }
-      ],
-      materiOfflinePdf: 'Lembar_Kerja_Perbandingan_Pecahan.pdf (1.2 MB)'
+      ]
     },
     {
       id: 'sub-5',
@@ -298,8 +294,7 @@ KPK dari 2 dan 3 adalah 6.
       ],
       slides: [
         { slideNo: 1, judul: 'Operasi Pecahan Dasar', konten: 'Syarat mutlak: Penyebut harus disamakan terlebih dahulu!' }
-      ],
-      materiOfflinePdf: 'Bank_Soal_Operasi_Pecahan.pdf (3.1 MB)'
+      ]
     }
   ]
 };

@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 frontend/node_modules/
+FRONTEND/node_modules/
+backend/vendor/
+backend/node_modules/
 
 # Private Specs
 PRD.Md
@@ -10,13 +13,18 @@ prd.md
 # Production Build Output
 dist/
 frontend/dist/
+FRONTEND/dist/
 
-# Local Environment Variables
+# Local Environment Variables & DB
 .env
 .env.local
 .env.*.local
 frontend/.env
-frontend/.env.local
+FRONTEND/.env
+backend/.env
+*.sqlite
+*.sqlite*
+database.sqlite
 
 # IDE and Editor Files
 .vscode/

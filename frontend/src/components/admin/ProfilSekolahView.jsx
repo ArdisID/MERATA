@@ -15,18 +15,41 @@ import {
   Save,
   X
 } from 'lucide-react';
+import api from '../../services/api';
 
 export default function ProfilSekolahView({ schoolProfile, setSchoolProfile }) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ ...schoolProfile });
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     setSchoolProfile(formData);
     setIsEditing(false);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
+
+    try {
+      await api.admin.updateProfilSekolah({
+        nama: formData.nama,
+        npsn: formData.npsn,
+        akreditasi: formData.akreditasi,
+        status_sekolah: formData.statusSekolah,
+        jenjang: formData.jenjang,
+        kepala_sekolah: formData.kepalaSekolah,
+        nip_kepsek: formData.nipKepsek,
+        operator: formData.operator,
+        alamat: formData.alamat,
+        wilayah: formData.wilayah,
+        kode_pos: formData.kodePos,
+        telepon: formData.telepon,
+        email: formData.email,
+        website: formData.website,
+        kurikulum: formData.kurikulum,
+      });
+    } catch (err) {
+      console.warn('Backend sync for school profile warning:', err);
+    }
   };
 
   return (
