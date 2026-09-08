@@ -97,7 +97,7 @@ export default function AdminDashboard({
               className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between transition-all duration-200 card-interactive cursor-pointer group"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   {card.title}
                 </span>
                 <div className={`p-2.5 rounded-xl ${card.iconBg} transition-transform group-hover:scale-105`}>
@@ -105,8 +105,8 @@ export default function AdminDashboard({
                 </div>
               </div>
 
-              <div className="mt-4">
-                <div className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+              <div className="mt-3">
+                <div className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                   {card.value}
                 </div>
                 <div className="flex items-center gap-1 mt-1.5 text-xs font-medium">

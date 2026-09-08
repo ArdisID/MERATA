@@ -13,7 +13,11 @@ import {
   Printer,
   X,
   UploadCloud,
-  CheckCircle2
+  CheckCircle2,
+  Edit2,
+  Trash2,
+  AlertCircle,
+  Wrench
 } from 'lucide-react';
 import { exportToCSV, printFormattedReport } from '../../utils/exportUtils';
 import api from '../../services/api';
@@ -32,13 +36,43 @@ export default function DataSekolahView({
   const [filterKelas, setFilterKelas] = useState('all');
   const [filterBantuan, setFilterBantuan] = useState('all');
   const [filterKepegawaian, setFilterKepegawaian] = useState('all');
+  const [filterMapel, setFilterMapel] = useState('all');
+
+  // Modals & Action States
+  const [editingTeacher, setEditingTeacher] = useState(null);
+  const [deletingTeacher, setDeletingTeacher] = useState(null);
+  const [deletingStudent, setDeletingStudent] = useState(null);
+  const [maintenanceFacility, setMaintenanceFacility] = useState(null);
+  const [deletingFacility, setDeletingFacility] = useState(null);
+  const [actionToast, setActionToast] = useState('');
+
+  const showActionToast = (msg) => {
+    setActionToast(msg);
+    setTimeout(() => setActionToast(''), 3500);
+  };
 
   // Modals state
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [selectedClass, setSelectedClass] = useState(null);
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
+  const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
   const [isAddFacilityModalOpen, setIsAddFacilityModalOpen] = useState(false);
+  const [newTeacher, setNewTeacher] = useState({
+    nip: '',
+    nama: '',
+    gender: 'Laki-laki',
+    mapel: 'Matematika',
+    kelasAjar: '7A, 7B',
+    jabatan: 'Guru Mata Pelajaran',
+    statusKepegawaian: 'PNS / ASN',
+    sertifikasi: 'Sudah',
+    pendidikan: 'S1 Pendidikan',
+    lamaMengajar: '3 Tahun',
+    telepon: '',
+    email: '',
+    kebutuhan: '',
+  });
   const [uploadedFacilityPhoto, setUploadedFacilityPhoto] = useState(null);
   const [uploadingFacilityPhoto, setUploadingFacilityPhoto] = useState(false);
 
@@ -96,6 +130,9 @@ export default function DataSekolahView({
     return matchSearch && matchKelas && matchBantuan;
   });
 
+  // Available Mapels
+  const availableMapels = Array.from(new Set(teachers.map((t) => t.mapel))).filter(Boolean);
+
   // Filtered Teachers
   const filteredTeachers = teachers.filter((t) => {
     const matchSearch =
@@ -104,8 +141,78 @@ export default function DataSekolahView({
       t.nip.includes(globalSearch);
     const matchPegawai =
       filterKepegawaian === 'all' || t.statusKepegawaian === filterKepegawaian;
-    return matchSearch && matchPegawai;
+    const matchMapel =
+      filterMapel === 'all' || t.mapel === filterMapel;
+    return matchSearch && matchPegawai && matchMapel;
   });
+
+  // Handle Delete Student
+  const handleDeleteStudent = (studentId) => {
+    setStudents(students.filter((s) => s.id !== studentId));
+    setDeletingStudent(null);
+    if (selectedStudent && selectedStudent.id === studentId) setSelectedStudent(null);
+    showActionToast('Data siswa berhasil dihapus.');
+    try {
+      api.admin.deleteSiswa(studentId).catch((e) => console.warn('Sync delete student:', e));
+    } catch (e) {
+      console.warn('Sync delete student:', e);
+    }
+  };
+
+  // Handle Delete Teacher
+  const handleDeleteTeacher = (teacherId) => {
+    setTeachers(teachers.filter((t) => t.id !== teacherId));
+    setDeletingTeacher(null);
+    if (selectedTeacher && selectedTeacher.id === teacherId) setSelectedTeacher(null);
+    showActionToast('Data guru berhasil dihapus.');
+    try {
+      api.admin.deleteGuru(teacherId).catch((e) => console.warn('Sync delete teacher:', e));
+    } catch (e) {
+      console.warn('Sync delete teacher:', e);
+    }
+  };
+
+  // Handle Save Edit Teacher
+  const handleSaveEditTeacher = (e) => {
+    e.preventDefault();
+    if (!editingTeacher) return;
+
+    const kelasAjar = typeof editingTeacher.kelasAjar === 'string'
+      ? editingTeacher.kelasAjar.split(',').map((s) => s.trim()).filter(Boolean)
+      : editingTeacher.kelasAjar;
+
+    const updated = {
+      ...editingTeacher,
+      kelasAjar,
+    };
+
+    setTeachers(teachers.map((t) => (t.id === editingTeacher.id ? updated : t)));
+    setEditingTeacher(null);
+    if (selectedTeacher && selectedTeacher.id === editingTeacher.id) {
+      setSelectedTeacher(updated);
+    }
+    showActionToast(`Data guru ${updated.nama} berhasil diperbarui.`);
+
+    try {
+      api.admin.updateGuru(editingTeacher.id, {
+        nama: updated.nama,
+        nip: updated.nip,
+        gender: updated.gender,
+        mapel: updated.mapel,
+        kelas_ajar: updated.kelasAjar,
+        jabatan: updated.jabatan,
+        status_kepegawaian: updated.statusKepegawaian,
+        sertifikasi: updated.sertifikasi,
+        pendidikan: updated.pendidikan,
+        lama_mengajar: updated.lamaMengajar,
+        telepon: updated.telepon,
+        email: updated.email,
+        kebutuhan: updated.kebutuhan,
+      }).catch((e) => console.warn('Sync update teacher:', e));
+    } catch (e) {
+      console.warn('Sync update teacher:', e);
+    }
+  };
 
   // Handle Add Student
   const handleCreateStudent = (e) => {
@@ -150,6 +257,61 @@ export default function DataSekolahView({
       }).catch(err => console.warn('Sync student creation warning:', err));
     } catch (e) {
       console.warn('Sync student creation error:', e);
+    }
+  };
+
+  // Handle Add Teacher
+  const handleCreateTeacher = (e) => {
+    e.preventDefault();
+    if (!newTeacher.nama || !newTeacher.mapel) return;
+
+    const created = {
+      id: `GUR-${String(teachers.length + 1).padStart(3, '0')}`,
+      ...newTeacher,
+      kelasAjar: typeof newTeacher.kelasAjar === 'string'
+        ? newTeacher.kelasAjar.split(',').map((s) => s.trim()).filter(Boolean)
+        : newTeacher.kelasAjar,
+      poinKontribusi: 0,
+      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+    };
+
+    setTeachers([created, ...teachers]);
+    setIsAddTeacherModalOpen(false);
+    setNewTeacher({
+      nip: '',
+      nama: '',
+      gender: 'Laki-laki',
+      mapel: 'Matematika',
+      kelasAjar: '7A, 7B',
+      jabatan: 'Guru Mata Pelajaran',
+      statusKepegawaian: 'PNS / ASN',
+      sertifikasi: 'Sudah',
+      pendidikan: 'S1 Pendidikan',
+      lamaMengajar: '3 Tahun',
+      telepon: '',
+      email: '',
+      kebutuhan: '',
+    });
+
+    // Backend Sync
+    try {
+      api.admin.createGuru({
+        nama: newTeacher.nama,
+        nip: newTeacher.nip,
+        gender: newTeacher.gender,
+        mapel: newTeacher.mapel,
+        kelas_ajar: newTeacher.kelasAjar,
+        jabatan: newTeacher.jabatan,
+        status_kepegawaian: newTeacher.statusKepegawaian,
+        sertifikasi: newTeacher.sertifikasi,
+        pendidikan: newTeacher.pendidikan,
+        lama_mengajar: newTeacher.lamaMengajar,
+        telepon: newTeacher.telepon,
+        email: newTeacher.email,
+        kebutuhan: newTeacher.kebutuhan,
+      }).catch((err) => console.warn('Sync teacher creation warning:', err));
+    } catch (e) {
+      console.warn('Sync teacher creation error:', e);
     }
   };
 
@@ -200,6 +362,74 @@ export default function DataSekolahView({
     }
   };
 
+  // Handle Save / Submit Maintenance for Facility
+  const handleSaveMaintenance = (e) => {
+    e.preventDefault();
+    if (!maintenanceFacility) return;
+
+    const badge =
+      maintenanceFacility.kondisi === 'Baik'
+        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+        : maintenanceFacility.kondisi === 'Rusak Ringan'
+        ? 'bg-amber-50 text-amber-700 border-amber-200'
+        : 'bg-rose-50 text-rose-700 border-rose-200';
+
+    const todayStr = new Date().toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+
+    const updated = {
+      ...maintenanceFacility,
+      kondisiBadge: badge,
+      terakhirCek: todayStr,
+      jumlahTotal: Number(maintenanceFacility.jumlahTotal) || 1,
+      jumlahBaik: Number(maintenanceFacility.jumlahBaik) || 0,
+      jumlahRusak: Number(maintenanceFacility.jumlahRusak) || 0,
+    };
+
+    const updatedFacilities = facilities.map((f) =>
+      f.id === updated.id ? updated : f
+    );
+    setFacilities(updatedFacilities);
+    setMaintenanceFacility(null);
+    showActionToast(`Pengajuan pemeliharaan untuk "${updated.nama}" berhasil disimpan & diajukan!`);
+
+    // Backend Sync
+    try {
+      const dbId = updated.dbId || parseInt(String(updated.id).replace('FAS-', ''), 10) || 1;
+      api.admin.updateFasilitas(dbId, {
+        nama: updated.nama,
+        lokasi: updated.lokasi,
+        kondisi: updated.kondisi,
+        kondisi_badge: badge,
+        jumlah_total: updated.jumlahTotal,
+        jumlah_baik: updated.jumlahBaik,
+        jumlah_rusak: updated.jumlahRusak,
+        keterangan: updated.keterangan,
+        kebutuhan_tambahan: updated.kebutuhanTambahan,
+        terakhir_cek: new Date().toISOString().split('T')[0],
+      }).catch((err) => console.warn('Sync update facility warning:', err));
+    } catch (err) {
+      console.warn('Sync update facility error:', err);
+    }
+  };
+
+  // Handle Delete Facility
+  const handleDeleteFacility = (facilityId) => {
+    setFacilities(facilities.filter((f) => f.id !== facilityId));
+    setDeletingFacility(null);
+    showActionToast('Data fasilitas berhasil dihapus dari sistem.');
+
+    try {
+      const dbId = parseInt(String(facilityId).replace('FAS-', ''), 10) || 1;
+      api.admin.deleteFasilitas(dbId).catch((err) => console.warn('Sync delete facility warning:', err));
+    } catch (err) {
+      console.warn('Sync delete facility error:', err);
+    }
+  };
+
   // Export CSV Handlers
   const handleExportStudentsCSV = () => {
     const headers = [
@@ -230,6 +460,16 @@ export default function DataSekolahView({
 
   return (
     <div className="space-y-6">
+      {/* Toast Notification */}
+      {actionToast && (
+        <div className="fixed top-5 right-5 z-50 animate-in fade-in slide-in-from-top-4 duration-300 max-w-sm sm:max-w-md">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border bg-slate-900 text-white border-slate-700 text-xs font-semibold backdrop-blur-md">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            <span>{actionToast}</span>
+          </div>
+        </div>
+      )}
+
       {/* Header & Sub-tab navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
         <div>
@@ -263,14 +503,24 @@ export default function DataSekolahView({
           )}
 
           {activeSubTab === 'guru' && (
-            <button
-              type="button"
-              onClick={handleExportTeachersCSV}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-xs shadow-xs transition-all"
-            >
-              <Download className="w-4 h-4 text-gray-500" />
-              <span>Unduh CSV Guru</span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={handleExportTeachersCSV}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-xs shadow-xs transition-all cursor-pointer"
+              >
+                <Download className="w-4 h-4 text-gray-500" />
+                <span>Unduh CSV Guru</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsAddTeacherModalOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm shadow-blue-500/20 transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tambah Data Guru</span>
+              </button>
+            </>
           )}
 
           {activeSubTab === 'fasilitas' && (
@@ -441,14 +691,24 @@ export default function DataSekolahView({
                     </td>
 
                     <td className="py-3.5 px-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedStudent(siswa)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 font-bold text-[11px] text-gray-700 transition-colors cursor-pointer"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Lihat Detail</span>
-                      </button>
+                      <div className="inline-flex items-center gap-1.5 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedStudent(siswa)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 font-bold text-[11px] text-gray-700 transition-colors cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Detail</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingStudent(siswa)}
+                          className="p-1.5 rounded-lg border border-gray-200 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 text-gray-400 transition-colors cursor-pointer"
+                          title="Hapus Data Siswa"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -469,12 +729,27 @@ export default function DataSekolahView({
               <select
                 value={filterKepegawaian}
                 onChange={(e) => setFilterKepegawaian(e.target.value)}
-                className="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
               >
                 <option value="all">Semua Status</option>
-                <option value="PNS">PNS</option>
+                <option value="PNS / ASN">PNS / ASN</option>
                 <option value="PPPK">PPPK</option>
-                <option value="Honorer">Honorer</option>
+                <option value="Honorer / Kontrak">Honorer / Kontrak</option>
+                <option value="Guru Yayasan">Guru Yayasan</option>
+              </select>
+
+              <span className="text-xs font-bold text-gray-500 flex items-center gap-1 ml-1">
+                <BookOpen className="w-3.5 h-3.5" /> Mata Pelajaran:
+              </span>
+              <select
+                value={filterMapel}
+                onChange={(e) => setFilterMapel(e.target.value)}
+                className="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+              >
+                <option value="all">Semua Mapel</option>
+                {availableMapels.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
               </select>
             </div>
 
@@ -526,7 +801,7 @@ export default function DataSekolahView({
                     <td className="py-3.5 px-3">
                       <span
                         className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          guru.statusKepegawaian === 'PNS'
+                          guru.statusKepegawaian === 'PNS / ASN' || guru.statusKepegawaian === 'PNS'
                             ? 'bg-blue-50 text-blue-700 border border-blue-200'
                             : guru.statusKepegawaian === 'PPPK'
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -542,14 +817,37 @@ export default function DataSekolahView({
                     </td>
 
                     <td className="py-3.5 px-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedTeacher(guru)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 font-bold text-[11px] text-gray-700 transition-colors cursor-pointer"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Detail & Kebutuhan</span>
-                      </button>
+                      <div className="inline-flex items-center gap-1.5 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTeacher(guru)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 font-bold text-[11px] text-gray-700 transition-colors cursor-pointer"
+                          title="Lihat Detail & Kebutuhan"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Detail</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingTeacher({
+                            ...guru,
+                            kelasAjar: Array.isArray(guru.kelasAjar) ? guru.kelasAjar.join(', ') : (guru.kelasAjar || '')
+                          })}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 font-bold text-[11px] text-gray-700 transition-colors cursor-pointer"
+                          title="Edit Data Guru"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingTeacher(guru)}
+                          className="p-1.5 rounded-lg border border-gray-200 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 text-gray-400 transition-colors cursor-pointer"
+                          title="Hapus Data Guru"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -626,9 +924,27 @@ export default function DataSekolahView({
                     <h3 className="text-base font-extrabold text-gray-900">{fas.nama}</h3>
                     <p className="text-xs text-gray-400 mt-0.5">{fas.lokasi}</p>
                   </div>
-                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${fas.kondisiBadge}`}>
-                    {fas.kondisi}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${fas.kondisiBadge}`}>
+                      {fas.kondisi}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setMaintenanceFacility({ ...fas })}
+                      className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                      title="Edit / Ajukan Pemeliharaan"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeletingFacility(fas)}
+                      className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                      title="Hapus Fasilitas"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 py-3 bg-gray-50 rounded-xl my-3 text-center">
@@ -662,9 +978,14 @@ export default function DataSekolahView({
 
               <div className="flex items-center justify-between text-[11px] text-gray-400 pt-2 border-t border-gray-100">
                 <span>Inspeksi Terakhir: {fas.terakhirCek}</span>
-                <span className="text-blue-600 font-semibold cursor-pointer hover:underline">
-                  Ajukan Pemeliharaan
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setMaintenanceFacility({ ...fas })}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
+                >
+                  <Wrench className="w-3.5 h-3.5" />
+                  <span>Ajukan Pemeliharaan</span>
+                </button>
               </div>
             </div>
           ))}
@@ -675,7 +996,7 @@ export default function DataSekolahView({
 
       {/* 1. DETAIL SISWA MODAL */}
       {selectedStudent && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <div>
@@ -766,7 +1087,7 @@ export default function DataSekolahView({
 
       {/* 2. DETAIL GURU MODAL */}
       {selectedTeacher && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <div>
@@ -835,7 +1156,7 @@ export default function DataSekolahView({
 
       {/* 3. DETAIL KELAS & JADWAL MODAL */}
       {selectedClass && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <div>
@@ -879,7 +1200,7 @@ export default function DataSekolahView({
 
       {/* 4. TAMBAH DATA SISWA MODAL */}
       {isAddStudentModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <h3 className="text-base font-extrabold text-gray-900">Tambah Data Siswa Baru</h3>
@@ -1010,7 +1331,7 @@ export default function DataSekolahView({
 
       {/* 5. TAMBAH / USULKAN FASILITAS MODAL */}
       {isAddFacilityModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <h3 className="text-base font-extrabold text-gray-900">Tambah / Usulkan Fasilitas Sarpras</h3>
@@ -1149,6 +1470,636 @@ export default function DataSekolahView({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 6. TAMBAH DATA GURU MODAL */}
+      {isAddTeacherModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-xl rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                  <GraduationCap className="w-4 h-4" />
+                </div>
+                <h3 className="text-base font-extrabold text-gray-900">Tambah Data Guru Baru</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddTeacherModalOpen(false)}
+                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateTeacher} className="p-6 space-y-4 overflow-y-auto text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Nama Lengkap Guru *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Misal: Ahmad Fauzi, S.Pd."
+                    value={newTeacher.nama}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, nama: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">NIP (Nomor Induk Pegawai)</label>
+                  <input
+                    type="text"
+                    placeholder="198503152010011002 atau '-'"
+                    value={newTeacher.nip}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, nip: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Jenis Kelamin</label>
+                  <select
+                    value={newTeacher.gender}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, gender: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  >
+                    <option value="Laki-laki">Laki-laki</option>
+                    <option value="Perempuan">Perempuan</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Mata Pelajaran Utama *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Misal: Matematika, IPA Terpadu"
+                    value={newTeacher.mapel}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, mapel: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Kelas yang Diajar (Pisahkan koma)</label>
+                  <input
+                    type="text"
+                    placeholder="Misal: 7A, 7B, 8A"
+                    value={newTeacher.kelasAjar}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, kelasAjar: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Jabatan / Tugas Tambahan</label>
+                  <input
+                    type="text"
+                    placeholder="Misal: Wali Kelas 7A / Guru Mapel"
+                    value={newTeacher.jabatan}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, jabatan: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Status Kepegawaian</label>
+                  <select
+                    value={newTeacher.statusKepegawaian}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, statusKepegawaian: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  >
+                    <option value="PNS / ASN">PNS / ASN</option>
+                    <option value="PPPK">PPPK</option>
+                    <option value="Honorer / Kontrak">Honorer / Kontrak</option>
+                    <option value="Guru Yayasan">Guru Yayasan</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Status Sertifikasi</label>
+                  <select
+                    value={newTeacher.sertifikasi}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, sertifikasi: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  >
+                    <option value="Sudah">Sudah Sertifikasi</option>
+                    <option value="Belum">Belum Sertifikasi</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Pendidikan Terakhir</label>
+                  <select
+                    value={newTeacher.pendidikan}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, pendidikan: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  >
+                    <option value="S1 Pendidikan">S1 Pendidikan</option>
+                    <option value="S2 Pendidikan">S2 Pendidikan</option>
+                    <option value="D4">D4</option>
+                    <option value="S1 Non-Kependidikan">S1 Non-Kependidikan</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Email Aktif</label>
+                  <input
+                    type="email"
+                    placeholder="nama.guru@sekolah.sch.id"
+                    value={newTeacher.email}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, email: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Nomor Telepon / WhatsApp</label>
+                  <input
+                    type="tel"
+                    placeholder="081234567890"
+                    value={newTeacher.telepon}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, telepon: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Kebutuhan Fasilitas / Media Ajar</label>
+                <input
+                  type="text"
+                  placeholder="Misal: Perangkat proyektor mini, Modul latihan digital"
+                  value={newTeacher.kebutuhan}
+                  onChange={(e) => setNewTeacher({ ...newTeacher, kebutuhan: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                />
+              </div>
+
+              <div className="p-4 border-t border-gray-100 flex items-center justify-end gap-2 -mx-6 -mb-6 bg-gray-50">
+                <button
+                  type="button"
+                  onClick={() => setIsAddTeacherModalOpen(false)}
+                  className="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold rounded-xl text-xs cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-sm cursor-pointer"
+                >
+                  Simpan Data Guru
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 7. EDIT DATA GURU MODAL */}
+      {editingTeacher && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-xl rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                  <Edit2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-gray-900">Edit Data Guru</h3>
+                  <p className="text-xs text-gray-400 font-mono">ID: {editingTeacher.id} • NIP: {editingTeacher.nip}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingTeacher(null)}
+                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditTeacher} className="p-6 space-y-4 overflow-y-auto text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Nama Lengkap Guru *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingTeacher.nama || ''}
+                    onChange={(e) => setEditingTeacher({ ...editingTeacher, nama: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">NIP (Nomor Induk Pegawai)</label>
+                  <input
+                    type="text"
+                    value={editingTeacher.nip || ''}
+                    onChange={(e) => setEditingTeacher({ ...editingTeacher, nip: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Mata Pelajaran *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingTeacher.mapel || ''}
+                    onChange={(e) => setEditingTeacher({ ...editingTeacher, mapel: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Kelas yang Diajar (Pisahkan koma)</label>
+                  <input
+                    type="text"
+                    value={editingTeacher.kelasAjar || ''}
+                    onChange={(e) => setEditingTeacher({ ...editingTeacher, kelasAjar: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Status Kepegawaian</label>
+                  <select
+                    value={editingTeacher.statusKepegawaian || 'PNS / ASN'}
+                    onChange={(e) => setEditingTeacher({ ...editingTeacher, statusKepegawaian: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  >
+                    <option value="PNS / ASN">PNS / ASN</option>
+                    <option value="PPPK">PPPK</option>
+                    <option value="Honorer / Kontrak">Honorer / Kontrak</option>
+                    <option value="Guru Yayasan">Guru Yayasan</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Status Sertifikasi</label>
+                  <select
+                    value={editingTeacher.sertifikasi || 'Sudah'}
+                    onChange={(e) => setEditingTeacher({ ...editingTeacher, sertifikasi: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  >
+                    <option value="Sudah">Sudah Sertifikasi</option>
+                    <option value="Belum">Belum Sertifikasi</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Jabatan / Peran</label>
+                  <input
+                    type="text"
+                    value={editingTeacher.jabatan || ''}
+                    onChange={(e) => setEditingTeacher({ ...editingTeacher, jabatan: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Email Kontak</label>
+                  <input
+                    type="email"
+                    value={editingTeacher.email || ''}
+                    onChange={(e) => setEditingTeacher({ ...editingTeacher, email: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Nomor Telepon / WA</label>
+                  <input
+                    type="tel"
+                    value={editingTeacher.telepon || ''}
+                    onChange={(e) => setEditingTeacher({ ...editingTeacher, telepon: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Kebutuhan Fasilitas & Media Pengajaran</label>
+                <input
+                  type="text"
+                  value={editingTeacher.kebutuhan || ''}
+                  onChange={(e) => setEditingTeacher({ ...editingTeacher, kebutuhan: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                />
+              </div>
+
+              <div className="p-4 border-t border-gray-100 flex items-center justify-end gap-2 -mx-6 -mb-6 bg-gray-50">
+                <button
+                  type="button"
+                  onClick={() => setEditingTeacher(null)}
+                  className="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold rounded-xl text-xs cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-sm cursor-pointer"
+                >
+                  Simpan Perubahan Guru
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 8. KONFIRMASI HAPUS GURU MODAL */}
+      {deletingTeacher && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col">
+            <div className="p-6 text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-extrabold text-gray-900">Hapus Data Guru?</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Apakah Anda yakin ingin menghapus data pengajar <strong>"{deletingTeacher.nama}"</strong> (NIP: {deletingTeacher.nip})? Data yang dihapus tidak dapat dipulihkan.
+              </p>
+            </div>
+
+            <div className="p-4 border-t border-gray-100 flex items-center justify-end gap-2 bg-gray-50">
+              <button
+                type="button"
+                onClick={() => setDeletingTeacher(null)}
+                className="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold rounded-xl text-xs cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteTeacher(deletingTeacher.id)}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow-xs cursor-pointer"
+              >
+                Ya, Hapus Guru
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 9. KONFIRMASI HAPUS SISWA MODAL */}
+      {deletingStudent && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col">
+            <div className="p-6 text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-extrabold text-gray-900">Hapus Data Siswa?</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Apakah Anda yakin ingin menghapus data siswa <strong>"{deletingStudent.nama}"</strong> (NISN: {deletingStudent.nisn} - Kelas {deletingStudent.kelas})?
+              </p>
+            </div>
+
+            <div className="p-4 border-t border-gray-100 flex items-center justify-end gap-2 bg-gray-50">
+              <button
+                type="button"
+                onClick={() => setDeletingStudent(null)}
+                className="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold rounded-xl text-xs cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteStudent(deletingStudent.id)}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow-xs cursor-pointer"
+              >
+                Ya, Hapus Siswa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 10. MODAL: EDIT & AJUKAN PEMELIHARAAN FASILITAS */}
+      {maintenanceFacility && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-xl rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-blue-50/50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold">
+                  <Wrench className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-gray-900">
+                    Pengajuan Pemeliharaan Sarpras
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    {maintenanceFacility.nama} • {maintenanceFacility.lokasi}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMaintenanceFacility(null)}
+                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveMaintenance} className="p-6 space-y-4 overflow-y-auto text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Nama Fasilitas / Ruangan *</label>
+                  <input
+                    type="text"
+                    required
+                    value={maintenanceFacility.nama || ''}
+                    onChange={(e) => setMaintenanceFacility({ ...maintenanceFacility, nama: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Lokasi Gedung / Ruangan</label>
+                  <input
+                    type="text"
+                    value={maintenanceFacility.lokasi || ''}
+                    onChange={(e) => setMaintenanceFacility({ ...maintenanceFacility, lokasi: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Kondisi Terkini Sarpras *</label>
+                <select
+                  value={maintenanceFacility.kondisi || 'Baik'}
+                  onChange={(e) => {
+                    const newKondisi = e.target.value;
+                    let baik = Number(maintenanceFacility.jumlahBaik) || 0;
+                    let rusak = Number(maintenanceFacility.jumlahRusak) || 0;
+                    const total = Number(maintenanceFacility.jumlahTotal) || 1;
+                    if (newKondisi === 'Baik') {
+                      baik = total;
+                      rusak = 0;
+                    } else if (newKondisi === 'Rusak Berat' && rusak === 0) {
+                      rusak = total;
+                      baik = 0;
+                    }
+                    setMaintenanceFacility({
+                      ...maintenanceFacility,
+                      kondisi: newKondisi,
+                      jumlahBaik: baik,
+                      jumlahRusak: rusak,
+                    });
+                  }}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none font-medium"
+                >
+                  <option value="Baik">✅ Kondisi Baik (Operasional Normal)</option>
+                  <option value="Rusak Ringan">⚠️ Rusak Ringan (Perlu Servis / Perbaikan Berkala)</option>
+                  <option value="Rusak Berat">🛑 Rusak Berat (Tidak Berfungsi / Perlu Penggantian Total)</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                <div>
+                  <label className="font-bold text-gray-600 text-[11px] block mb-1">Total Unit</label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={maintenanceFacility.jumlahTotal ?? 1}
+                    onChange={(e) => {
+                      const total = Math.max(1, Number(e.target.value));
+                      setMaintenanceFacility({
+                        ...maintenanceFacility,
+                        jumlahTotal: total,
+                        jumlahBaik: Math.max(0, total - (Number(maintenanceFacility.jumlahRusak) || 0)),
+                      });
+                    }}
+                    className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-center font-extrabold"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-emerald-700 text-[11px] block mb-1">Kondisi Baik</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={maintenanceFacility.jumlahBaik ?? 0}
+                    onChange={(e) => setMaintenanceFacility({ ...maintenanceFacility, jumlahBaik: Number(e.target.value) })}
+                    className="w-full px-3 py-1.5 bg-white border border-emerald-300 rounded-lg text-center font-extrabold text-emerald-700"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-rose-700 text-[11px] block mb-1">Rusak / Ganti</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={maintenanceFacility.jumlahRusak ?? 0}
+                    onChange={(e) => setMaintenanceFacility({ ...maintenanceFacility, jumlahRusak: Number(e.target.value) })}
+                    className="w-full px-3 py-1.5 bg-white border border-rose-300 rounded-lg text-center font-extrabold text-rose-700"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Keterangan Kondisi & Detail Kerusakan *</label>
+                <textarea
+                  rows={2}
+                  required
+                  placeholder="Jelaskan bagian mana yang rusak atau membutuhkan pemeliharaan..."
+                  value={maintenanceFacility.keterangan || ''}
+                  onChange={(e) => setMaintenanceFacility({ ...maintenanceFacility, keterangan: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none resize-none leading-relaxed"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-blue-700 block mb-1">Usulan Kebutuhan Tambahan / Pengajuan Perbaikan *</label>
+                <textarea
+                  rows={2}
+                  required
+                  placeholder="Misal: Pembelian sparepart RAM 8GB, 2 unit proyektor pengganti, atau servis berkala AC..."
+                  value={maintenanceFacility.kebutuhanTambahan || ''}
+                  onChange={(e) => setMaintenanceFacility({ ...maintenanceFacility, kebutuhanTambahan: e.target.value })}
+                  className="w-full px-3 py-2 bg-blue-50/50 border border-blue-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none resize-none leading-relaxed font-medium"
+                />
+              </div>
+
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-900 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <p>
+                  Pengajuan pemeliharaan akan memperbarui tanggal inspeksi ke <strong>Hari ini</strong> dan dapat ditinjau pada menu <strong>Kebutuhan & Bantuan</strong> untuk alokasi dana RKAS Sekolah maupun Pemda.
+                </p>
+              </div>
+
+              <div className="p-4 border-t border-gray-100 flex items-center justify-end gap-2 -mx-6 -mb-6 bg-gray-50">
+                <button
+                  type="button"
+                  onClick={() => setMaintenanceFacility(null)}
+                  className="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold rounded-xl text-xs cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Wrench className="w-3.5 h-3.5" />
+                  <span>Simpan & Ajukan Pemeliharaan</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 11. MODAL: KONFIRMASI HAPUS FASILITAS */}
+      {deletingFacility && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col">
+            <div className="p-6 text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-extrabold text-gray-900">Hapus Sarana Prasarana?</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Apakah Anda yakin ingin menghapus data fasilitas <strong>"{deletingFacility.nama}"</strong> ({deletingFacility.lokasi})?
+              </p>
+            </div>
+
+            <div className="p-4 border-t border-gray-100 flex items-center justify-end gap-2 bg-gray-50">
+              <button
+                type="button"
+                onClick={() => setDeletingFacility(null)}
+                className="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold rounded-xl text-xs cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteFacility(deletingFacility.id)}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow-xs cursor-pointer"
+              >
+                Ya, Hapus Fasilitas
+              </button>
+            </div>
           </div>
         </div>
       )}

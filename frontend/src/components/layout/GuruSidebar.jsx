@@ -14,9 +14,7 @@ import {
 
 const guruMenuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'kelas', label: 'Kelas & Materi', icon: BookOpen },
-  { id: 'game', label: 'Game Pembelajaran', icon: Gamepad2 },
-  { id: 'quiz', label: 'Quiz Evaluasi', icon: CheckSquare },
+  { id: 'kelas', label: 'Kelas & Pembelajaran', icon: BookOpen },
   { id: 'monitoring', label: 'Monitoring Siswa', icon: BarChart3 },
   { id: 'profil', label: 'Profil & Kebutuhan', icon: User },
 ];
@@ -33,7 +31,7 @@ export default function GuruSidebar({
       {/* Mobile Backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden backdrop-blur-xs transition-opacity"
+          className="fixed inset-0 bg-slate-900/60 z-40 lg:hidden backdrop-blur-sm transition-opacity"
           onClick={() => setSidebarOpen(false)}
         />
       )}

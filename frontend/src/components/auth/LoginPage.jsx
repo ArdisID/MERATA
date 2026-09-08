@@ -62,36 +62,11 @@ export default function LoginPage({ onLoginSuccess }) {
     } catch (err) {
       console.warn('Backend login attempt failed:', err);
       if (err.isNetworkError) {
-        setErrorMessage('Server backend belum terhubung. Menggunakan mode demonstrasi.');
-        setTimeout(() => {
-          setIsLoading(false);
-          if (onLoginSuccess) onLoginSuccess(activeTab);
-        }, 600);
+        setErrorMessage('Gagal terhubung ke server backend. Silakan periksa koneksi Anda.');
+        setIsLoading(false);
       } else {
         setIsLoading(false);
         setErrorMessage(err.message || 'Email atau kata sandi tidak sesuai.');
-      }
-    }
-  };
-
-  const handleQuickDemo = async (role) => {
-    setActiveTab(role);
-    const targetEmail = roleConfig[role].defaultEmail;
-    setEmail(targetEmail);
-    setPassword('password');
-    setIsLoading(true);
-    setErrorMessage('');
-    try {
-      const res = await api.auth.login(targetEmail, 'password');
-      setIsLoading(false);
-      if (onLoginSuccess) {
-        onLoginSuccess(res.user?.role || role, res.user);
-      }
-    } catch (err) {
-      console.warn('Quick demo API login fallback:', err);
-      setIsLoading(false);
-      if (onLoginSuccess) {
-        onLoginSuccess(role);
       }
     }
   };
@@ -301,38 +276,6 @@ export default function LoginPage({ onLoginSuccess }) {
               </button>
             </div>
           </form>
-
-          {/* Minimalist Demo Access Area */}
-          <div className="pt-4 border-t border-gray-100 text-center space-y-2">
-            <span className="text-xs text-gray-400 font-medium block">
-              Gunakan akses demo:
-            </span>
-            <div className="flex items-center justify-center gap-3 text-xs font-medium text-gray-500">
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('guru')}
-                className="px-2 py-1 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer"
-              >
-                Demo Guru
-              </button>
-              <span className="text-gray-300">•</span>
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('admin')}
-                className="px-2 py-1 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer"
-              >
-                Demo Admin
-              </button>
-              <span className="text-gray-300">•</span>
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('pemerintah')}
-                className="px-2 py-1 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer"
-              >
-                Demo Dinas
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>

@@ -221,7 +221,7 @@ export default function PemerintahView({
       {/* Mobile Backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden backdrop-blur-xs transition-opacity"
+          className="fixed inset-0 bg-slate-900/60 z-40 lg:hidden backdrop-blur-sm transition-opacity"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -388,48 +388,51 @@ export default function PemerintahView({
               {/* 4 Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs card-interactive">
-                  <span className="text-xs font-semibold uppercase text-slate-500">Total Sekolah</span>
-                  <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">{mockPemerintahStats.totalSekolah} Sekolah</div>
-                  <p className="text-xs text-purple-600 font-medium mt-1">Provinsi DKI Jakarta</p>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Sekolah</span>
+                  <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-1.5">{mockPemerintahStats.totalSekolah} Sekolah</div>
+                  <p className="text-[11px] text-purple-600 font-medium mt-1">Provinsi DKI Jakarta</p>
                 </div>
 
                 <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs card-interactive">
-                  <span className="text-xs font-semibold uppercase text-slate-500">Total Siswa Terdata</span>
-                  <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">{mockPemerintahStats.totalSiswa.toLocaleString('id-ID')}</div>
-                  <p className="text-xs text-blue-600 font-medium mt-1">Siswa Terdaftar Dapodik</p>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Siswa Terdata</span>
+                  <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-1.5">{mockPemerintahStats.totalSiswa.toLocaleString('id-ID')}</div>
+                  <p className="text-[11px] text-blue-600 font-medium mt-1">Siswa Terdaftar Dapodik</p>
                 </div>
 
                 <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs card-interactive">
-                  <span className="text-xs font-semibold uppercase text-slate-500">Sekolah Prioritas</span>
-                  <div className="text-2xl sm:text-3xl font-bold text-rose-600 mt-2">{mockPemerintahStats.sekolahPrioritas} Sekolah</div>
-                  <p className="text-xs text-rose-600 font-medium mt-1">Sarpras Rusak Berat / Kritis</p>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Sekolah Prioritas</span>
+                  <div className="text-xl sm:text-2xl font-bold text-rose-600 mt-1.5">{mockPemerintahStats.sekolahPrioritas} Sekolah</div>
+                  <p className="text-[11px] text-rose-600 font-medium mt-1">Sarpras Rusak Berat / Kritis</p>
                 </div>
 
                 <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs card-interactive">
-                  <span className="text-xs font-semibold uppercase text-slate-500">Anggaran Tersalurkan</span>
-                  <div className="text-2xl sm:text-3xl font-bold text-emerald-600 mt-2">{mockPemerintahStats.anggaranTerealisasi}</div>
-                  <p className="text-xs text-emerald-600 font-medium mt-1">DAK Fisik & BOS Kinerja</p>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Anggaran Tersalurkan</span>
+                  <div className="text-base sm:text-lg font-bold text-emerald-600 mt-1.5 flex items-baseline gap-1.5 flex-wrap">
+                    <span>Rp 31.850.000.000</span>
+                    <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">(70.7%)</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-600 font-medium mt-1">DAK Fisik & BOS Kinerja</p>
                 </div>
               </div>
 
               {/* Extra Metric Cards: Total Guru, Siswa Perlu Bantuan, Guru Perlu Dukungan */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs card-interactive">
-                  <span className="text-xs font-semibold uppercase text-slate-500">Total Guru Terdaftar</span>
-                  <div className="text-2xl font-bold text-indigo-600 mt-2">{mockPemerintahStats.totalGuru.toLocaleString('id-ID')}</div>
-                  <p className="text-xs text-indigo-600 font-medium mt-1">Guru & Tenaga Kependidikan</p>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Guru Terdaftar</span>
+                  <div className="text-lg sm:text-xl font-bold text-indigo-600 mt-1.5">{mockPemerintahStats.totalGuru.toLocaleString('id-ID')} Guru</div>
+                  <p className="text-[11px] text-indigo-600 font-medium mt-1">Guru & Tenaga Kependidikan</p>
                 </div>
 
                 <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs card-interactive">
-                  <span className="text-xs font-semibold uppercase text-slate-500">Siswa Perlu Bantuan</span>
-                  <div className="text-2xl font-bold text-amber-600 mt-2">{students.filter(s => s.statusBantuan && s.statusBantuan !== 'Belum Ada').length} Siswa</div>
-                  <p className="text-xs text-amber-600 font-medium mt-1">KIP / KJP / Beasiswa Aktif</p>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Siswa Perlu Bantuan</span>
+                  <div className="text-lg sm:text-xl font-bold text-amber-600 mt-1.5">{students.filter(s => s.statusBantuan && s.statusBantuan !== 'Belum Ada').length} Siswa</div>
+                  <p className="text-[11px] text-amber-600 font-medium mt-1">KIP / KJP / Beasiswa Aktif</p>
                 </div>
 
                 <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs card-interactive">
-                  <span className="text-xs font-semibold uppercase text-slate-500">Guru Perlu Dukungan</span>
-                  <div className="text-2xl font-bold text-purple-600 mt-2">{teachers.filter(t => t.statusKepegawaian === 'Honorer' || t.sertifikasi.includes('Belum')).length} Guru</div>
-                  <p className="text-xs text-purple-600 font-medium mt-1">Honorer / Belum Sertifikasi</p>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Guru Perlu Dukungan</span>
+                  <div className="text-lg sm:text-xl font-bold text-purple-600 mt-1.5">{teachers.filter(t => t.statusKepegawaian === 'Honorer' || t.sertifikasi.includes('Belum')).length} Guru</div>
+                  <p className="text-[11px] text-purple-600 font-medium mt-1">Honorer / Belum Sertifikasi</p>
                 </div>
               </div>
 
@@ -1053,7 +1056,7 @@ export default function PemerintahView({
 
       {/* ================= MODAL PERSETUJUAN BANTUAN ================= */}
       {approvalModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
               <div>
@@ -1136,7 +1139,7 @@ export default function PemerintahView({
 
       {/* ================= MODAL TAMBAH MATERI BARU ================= */}
       {isAddMaterialModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
               <div>

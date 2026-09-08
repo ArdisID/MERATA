@@ -344,6 +344,7 @@ export const initialFacilities = [
 export const initialVerifications = [
   {
     id: 'VRF-001',
+    tipe: 'guru',
     judul: 'Pengadaan Laptop Lab IPA & TIK (15 Unit)',
     kategori: 'Peralatan IT & Digital',
     pemohon: 'Budi Santoso, S.Kom',
@@ -353,13 +354,14 @@ export const initialVerifications = [
     urgensiBadge: 'bg-red-50 text-red-700 border-red-200',
     estimasiBiaya: 'Rp 105.000.000',
     justifikasi: 'Persiapan pelaksanaan Asesmen Nasional Berbasis Komputer (ANBK) dan pembelajaran coding siswa.',
-    status: 'menunggu', // 'menunggu' | 'disetujui_sekolah' | 'diteruskan_pemda' | 'ditolak' | 'revisi'
+    status: 'menunggu', // 'menunggu' | 'disetujui_sekolah' | 'diteruskan_pemda' | 'disetujui_pemda' | 'ditolak' | 'perlu_revisi'
     statusLabel: 'Menunggu Verifikasi',
     catatanAdmin: '',
     lampiran: 'Proposal_ANBK_2026.pdf (1.2 MB)'
   },
   {
     id: 'VRF-002',
+    tipe: 'guru',
     judul: 'Pembaruan Server & Data Dapodik Semester 1',
     kategori: 'Administrasi Data',
     pemohon: 'Siti Rahmawati',
@@ -376,6 +378,7 @@ export const initialVerifications = [
   },
   {
     id: 'VRF-003',
+    tipe: 'guru',
     judul: 'Perbaikan Plafon & Atap Ruang Kelas 7B',
     kategori: 'Pemeliharaan Sarpras',
     pemohon: 'Ahmad Fauzi',
@@ -392,6 +395,7 @@ export const initialVerifications = [
   },
   {
     id: 'VRF-004',
+    tipe: 'guru',
     judul: 'Pelatihan Kurikulum Merdeka Guru Mapel Sains',
     kategori: 'Pelatihan Guru',
     pemohon: 'Dewi Lestari, M.Pd.',
@@ -405,6 +409,57 @@ export const initialVerifications = [
     statusLabel: 'Menunggu Verifikasi',
     catatanAdmin: '',
     lampiran: 'Silabus_Pelatihan_STEM.pdf (820 KB)'
+  },
+  {
+    id: 'VRF-005',
+    tipe: 'siswa',
+    judul: 'Bantuan Perlengkapan Seragam & Sepatu Sekolah Siswa Afirmasi',
+    kategori: 'Bantuan Siswa & KIP',
+    pemohon: 'Rian Pratama (Siswa Kelas 7A)',
+    peranPemohon: 'Siswa Afirmasi Prasejahtera',
+    tanggal: '29 Agt 2026',
+    urgensi: 'Mendesak',
+    urgensiBadge: 'bg-red-50 text-red-700 border-red-200',
+    estimasiBiaya: 'Rp 650.000',
+    justifikasi: 'Sepatu siswa robek dan belum memiliki seragam olahraga serta batik resmi sekolah karena kendala ekonomi keluarga.',
+    status: 'menunggu',
+    statusLabel: 'Menunggu Verifikasi',
+    catatanAdmin: '',
+    lampiran: 'Surat_Keterangan_Tidak_Mampu.pdf (620 KB)'
+  },
+  {
+    id: 'VRF-006',
+    tipe: 'siswa',
+    judul: 'Pengadaan Kacamata Koreksi Minus Siswa Penerima KIP',
+    kategori: 'Bantuan Siswa & KIP',
+    pemohon: 'Aisyah Putri Azzahra (Siswa Kelas 8A)',
+    peranPemohon: 'Siswa Penerima KJP Plus',
+    tanggal: '28 Agt 2026',
+    urgensi: 'Sedang',
+    urgensiBadge: 'bg-blue-50 text-blue-700 border-blue-200',
+    estimasiBiaya: 'Rp 450.000',
+    justifikasi: 'Siswa mengalami kesulitan membaca papan tulis dan layar pembelajaran, membutuhkan kacamata silindris minus.',
+    status: 'disetujui_sekolah',
+    statusLabel: 'Disetujui Sekolah',
+    catatanAdmin: 'Disetujui dialokasikan melalui program kepedulian sosial dana komite sekolah.',
+    lampiran: 'Hasil_Pemeriksaan_Mata_Puskesmas.pdf (310 KB)'
+  },
+  {
+    id: 'VRF-007',
+    tipe: 'siswa',
+    judul: 'Bantuan Peminjaman Tablet Pembelajaran Mandiri Siswa 3T',
+    kategori: 'Bantuan Siswa & KIP',
+    pemohon: 'Clarissa Maharani (Siswa Kelas 7B)',
+    peranPemohon: 'Siswa Penerima KIP',
+    tanggal: '25 Agt 2026',
+    urgensi: 'Sedang',
+    urgensiBadge: 'bg-blue-50 text-blue-700 border-blue-200',
+    estimasiBiaya: 'Rp 1.800.000',
+    justifikasi: 'Peminjaman tablet dari perpustakaan sekolah untuk mengerjakan modul literasi dan asesmen harian di rumah.',
+    status: 'diteruskan_pemda',
+    statusLabel: 'Diteruskan ke Pemerintah',
+    catatanAdmin: 'Diusulkan masuk kuota bantuan perangkat siswa Program Indonesia Pintar (PIP) Dinas.',
+    lampiran: 'Formulir_Pengajuan_Tablet_Siswa.pdf (410 KB)'
   }
 ];
 

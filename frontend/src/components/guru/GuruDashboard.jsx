@@ -63,50 +63,50 @@ export default function GuruDashboard({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs card-interactive">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Kelas Diajar</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kelas Diajar</span>
             <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600">
               <BookOpen className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-3">3 Rombel</div>
-          <p className="text-xs text-blue-600 font-medium mt-1">Kelas 5A, 7A, 8B</p>
+          <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-2">3 Rombel</div>
+          <p className="text-[11px] text-blue-600 font-medium mt-1">Kelas 5A, 7A, 8B</p>
         </div>
 
         <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs card-interactive">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Kehadiran Hari Ini</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kehadiran Hari Ini</span>
             <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-3">96.8%</div>
-          <p className="text-xs text-emerald-600 font-medium mt-1">+1.2% dari pekan lalu</p>
+          <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-2">96.8%</div>
+          <p className="text-[11px] text-emerald-600 font-medium mt-1">+1.2% dari pekan lalu</p>
         </div>
 
         <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs card-interactive">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Perlu Perhatian</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Perlu Perhatian</span>
             <div className="p-2.5 rounded-xl bg-rose-50 text-rose-600">
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-bold text-rose-600 mt-3">
+          <div className="text-xl sm:text-2xl font-bold text-rose-600 mt-2">
             {siswaPerluPerhatian.length} Siswa
           </div>
-          <p className="text-xs text-rose-600 font-medium mt-1">Memerlukan bimbingan</p>
+          <p className="text-[11px] text-rose-600 font-medium mt-1">Memerlukan bimbingan</p>
         </div>
 
         <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs card-interactive">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Usulan Sarpras</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Usulan Sarpras</span>
             <div className="p-2.5 rounded-xl bg-amber-50 text-amber-600">
               <Package className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-bold text-slate-900 mt-3">
+          <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-2">
             {teacherNeeds?.length || 3} Pengajuan
           </div>
-          <p className="text-xs text-amber-600 font-medium mt-1">1 Menunggu Verifikasi</p>
+          <p className="text-[11px] text-amber-600 font-medium mt-1">1 Menunggu Verifikasi</p>
         </div>
       </div>
 

@@ -379,22 +379,14 @@ export default function App() {
                 />
               )}
 
-              {guruActiveTab === 'kelas' && (
+              {(guruActiveTab === 'kelas' || guruActiveTab === 'game' || guruActiveTab === 'quiz') && (
                 <GuruKelasView
                   setActiveTab={setGuruActiveTab}
                   students={students}
                   setStudents={setStudents}
                   materials={materials}
                   globalSearch={globalSearch}
-                />
-              )}
-
-              {guruActiveTab === 'game' && <GuruGameView />}
-
-              {guruActiveTab === 'quiz' && (
-                <GuruQuizView
-                  students={students}
-                  setStudents={setStudents}
+                  initialMode={guruActiveTab === 'game' ? 'game' : guruActiveTab === 'quiz' ? 'quiz' : 'materi'}
                 />
               )}
 

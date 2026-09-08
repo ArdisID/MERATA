@@ -93,12 +93,14 @@ class ApiService {
     },
 
     logout: async () => {
+      const currentToken = this.token;
+      this.clearSession();
+      if (!currentToken) return;
+
       try {
         await this.request('/logout', { method: 'POST' });
       } catch (e) {
-        console.warn('Logout request warning:', e.message);
-      } finally {
-        this.clearSession();
+        // Silently complete logout without console error
       }
     },
 
@@ -164,7 +166,21 @@ class ApiService {
       method: 'PUT',
       body: payload
     }),
+    deleteSiswa: (id) => this.request(`/admin/siswa/${id}`, {
+      method: 'DELETE'
+    }),
     getGuru: () => this.request('/admin/guru'),
+    createGuru: (payload) => this.request('/admin/guru', {
+      method: 'POST',
+      body: payload
+    }),
+    updateGuru: (id, payload) => this.request(`/admin/guru/${id}`, {
+      method: 'PUT',
+      body: payload
+    }),
+    deleteGuru: (id) => this.request(`/admin/guru/${id}`, {
+      method: 'DELETE'
+    }),
     getKelas: () => this.request('/admin/kelas'),
     getFasilitas: () => this.request('/admin/fasilitas'),
     createFasilitas: (payload) => this.request('/admin/fasilitas', {
@@ -174,6 +190,9 @@ class ApiService {
     updateFasilitas: (id, payload) => this.request(`/admin/fasilitas/${id}`, {
       method: 'PUT',
       body: payload
+    }),
+    deleteFasilitas: (id) => this.request(`/admin/fasilitas/${id}`, {
+      method: 'DELETE'
     }),
     getVerifikasi: (params) => {
       const q = params ? `?${new URLSearchParams(params)}` : '';

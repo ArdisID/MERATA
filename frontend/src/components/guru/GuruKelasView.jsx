@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BookOpen,
   Users,
@@ -22,24 +22,36 @@ import {
 } from 'lucide-react';
 import { mockGuruClasses, mockPecahanMaterial } from '../../data/mockGuruData';
 import api from '../../services/api';
+import GuruGameView from './GuruGameView';
+import GuruQuizView from './GuruQuizView';
 
 export default function GuruKelasView({
   setActiveTab,
   students,
   setStudents,
   materials,
-  globalSearch = ''
+  globalSearch = '',
+  initialMode = 'materi'
 }) {
   const [selectedClass, setSelectedClass] = useState(mockGuruClasses[0]); // Default Kelas 5A
   const [selectedTopicId, setSelectedTopicId] = useState('MAT-001');
   const [selectedSubmateri, setSelectedSubmateri] = useState(mockPecahanMaterial.submateri[0]);
+  const [activeSection, setActiveSection] = useState(initialMode || 'materi'); // 'materi' | 'game' | 'quiz'
   const [activeContentTab, setActiveContentTab] = useState('materi'); // 'materi' | 'video' | 'soal' | 'slides'
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+  useEffect(() => {
+    if (initialMode) {
+      setActiveSection(initialMode);
+    }
+  }, [initialMode]);
 
   // Daily Attendance Sheet State
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
   const [attendanceRecords, setAttendanceRecords] = useState({}); // { [studentId]: 'H' | 'I' | 'S' | 'A' }
   const [attendanceToast, setAttendanceToast] = useState(false);
+  const [attendanceModalTab, setAttendanceModalTab] = useState('input'); // 'input' | 'history'
+  const [selectedHistoryDate, setSelectedHistoryDate] = useState('2026-08-28');
 
   // Active Material Topic
   const activeMaterial = materials?.find((m) => m.id === selectedTopicId) || {
@@ -142,6 +154,52 @@ export default function GuruKelasView({
   const sakitCount = Object.values(attendanceRecords).filter((v) => v === 'S').length;
   const alpaCount = Object.values(attendanceRecords).filter((v) => v === 'A').length;
 
+  // Mock Attendance History for Past Sessions
+  const mockAttendanceHistory = [
+    {
+      tanggal: '2026-08-28',
+      labelTanggal: 'Jumat, 28 Agt 2026',
+      hadir: classStudents.length > 2 ? classStudents.length - 2 : 28,
+      izin: 1,
+      sakit: 1,
+      alpa: 0,
+      detail: classStudents.map((s, idx) => ({
+        siswaId: s.id,
+        nama: s.nama,
+        nisn: s.nisn,
+        status: idx === 1 ? 'I' : idx === 3 ? 'S' : 'H',
+      }))
+    },
+    {
+      tanggal: '2026-08-27',
+      labelTanggal: 'Kamis, 27 Agt 2026',
+      hadir: classStudents.length > 1 ? classStudents.length - 1 : 29,
+      izin: 0,
+      sakit: 1,
+      alpa: 0,
+      detail: classStudents.map((s, idx) => ({
+        siswaId: s.id,
+        nama: s.nama,
+        nisn: s.nisn,
+        status: idx === 2 ? 'S' : 'H',
+      }))
+    },
+    {
+      tanggal: '2026-08-26',
+      labelTanggal: 'Rabu, 26 Agt 2026',
+      hadir: classStudents.length > 3 ? classStudents.length - 3 : 27,
+      izin: 2,
+      sakit: 0,
+      alpa: 1,
+      detail: classStudents.map((s, idx) => ({
+        siswaId: s.id,
+        nama: s.nama,
+        nisn: s.nisn,
+        status: idx === 0 ? 'A' : idx === 4 ? 'I' : 'H',
+      }))
+    }
+  ];
+
   return (
     <div className="space-y-6">
       {/* Toast */}
@@ -181,92 +239,118 @@ export default function GuruKelasView({
           </div>
         </div>
 
-        {/* Quick Action Buttons */}
+        {/* Navigation Tabs for Kelas: Materi, Game Edukasi, Quiz Evaluasi, & Presensi */}
         <div className="flex items-center gap-2 flex-wrap">
+          <div className="inline-flex p-1 bg-gray-100 rounded-xl border border-gray-200">
+            <button
+              type="button"
+              onClick={() => setActiveSection('materi')}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-bold text-xs transition-all cursor-pointer ${
+                activeSection === 'materi'
+                  ? 'bg-white text-blue-700 shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <BookOpen className="w-4 h-4 text-blue-600" />
+              <span>Materi & Modul</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveSection('game')}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-bold text-xs transition-all cursor-pointer ${
+                activeSection === 'game'
+                  ? 'bg-white text-amber-700 shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Gamepad2 className="w-4 h-4 text-amber-600" />
+              <span>Game Edukasi</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveSection('quiz')}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-bold text-xs transition-all cursor-pointer ${
+                activeSection === 'quiz'
+                  ? 'bg-white text-indigo-700 shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <CheckSquare className="w-4 h-4 text-indigo-600" />
+              <span>Quiz Evaluasi</span>
+            </button>
+          </div>
+
           <button
             type="button"
             onClick={handleOpenAttendance}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold text-xs transition-colors cursor-pointer shadow-xs"
           >
             <CalendarCheck className="w-4 h-4 text-emerald-600" />
-            <span>Presensi Harian Siswa</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('game')}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs transition-colors cursor-pointer"
-          >
-            <Gamepad2 className="w-4 h-4 text-amber-600" />
-            <span>Game Edukasi</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('quiz')}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
-          >
-            <CheckSquare className="w-4 h-4" />
-            <span>Quiz Evaluasi</span>
+            <span>Presensi Harian</span>
           </button>
         </div>
       </div>
 
-      {/* Class Selector Tabs */}
-      <div className="flex items-center gap-2 border-b border-gray-200 pb-2 overflow-x-auto">
-        {mockGuruClasses.map((cls) => (
-          <button
-            key={cls.id}
-            onClick={() => setSelectedClass(cls)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-              selectedClass.id === cls.id
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-            }`}
-          >
-            <BookOpen className="w-4 h-4" />
-            <span>{cls.nama} ({cls.mapel})</span>
-          </button>
-        ))}
-      </div>
+      {/* SECTION 1: MATERI & MODUL */}
+      {activeSection === 'materi' && (
+        <div className="space-y-6">
+          {/* Class Selector Tabs */}
+          <div className="flex items-center gap-2 border-b border-gray-200 pb-2 overflow-x-auto">
+            {mockGuruClasses.map((cls) => (
+              <button
+                key={cls.id}
+                onClick={() => setSelectedClass(cls)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  selectedClass.id === cls.id
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>{cls.nama} ({cls.mapel})</span>
+              </button>
+            ))}
+          </div>
 
-      {/* Main Grid: Submateri (4 Cols) & Interactive Content Viewer (8 Cols) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Submateri Navigation List */}
-        <div className="lg:col-span-4 space-y-4">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-              <h2 className="text-sm font-extrabold text-gray-900">Daftar Submateri Terstruktur</h2>
-              <span className="text-[11px] font-bold text-blue-600">
-                {activeMaterial.jumlahSubmateri || 5} Submateri
-              </span>
-            </div>
+          {/* Main Grid: Submateri (4 Cols) & Interactive Content Viewer (8 Cols) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Left Submateri Navigation List */}
+            <div className="lg:col-span-4 space-y-4">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                  <h2 className="text-sm font-extrabold text-gray-900">Daftar Submateri Terstruktur</h2>
+                  <span className="text-[11px] font-bold text-blue-600">
+                    {activeMaterial.jumlahSubmateri || 5} Submateri
+                  </span>
+                </div>
 
-            <div className="space-y-2">
-              {mockPecahanMaterial.submateri.map((sub) => {
-                const isSelected = selectedSubmateri.id === sub.id;
-                return (
-                  <div
-                    key={sub.id}
-                    onClick={() => {
-                      setSelectedSubmateri(sub);
-                      setCurrentSlideIndex(0);
-                    }}
-                    className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
-                      isSelected
-                        ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-500/20 shadow-xs'
-                        : 'bg-gray-50/70 border-gray-100 hover:bg-gray-100/70'
-                    }`}
-                  >
-                    <div
-                      className={`w-7 h-7 rounded-lg flex items-center justify-center font-extrabold text-xs shrink-0 ${
-                        isSelected
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-white text-gray-700 border border-gray-200'
-                      }`}
-                    >
-                      {sub.nomor}
-                    </div>
+                <div className="space-y-2">
+                  {mockPecahanMaterial.submateri.map((sub) => {
+                    const isSelected = selectedSubmateri.id === sub.id;
+                    return (
+                      <div
+                        key={sub.id}
+                        onClick={() => {
+                          setSelectedSubmateri(sub);
+                          setCurrentSlideIndex(0);
+                        }}
+                        className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
+                          isSelected
+                            ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-500/20 shadow-xs'
+                            : 'bg-gray-50/70 border-gray-100 hover:bg-gray-100/70'
+                        }`}
+                      >
+                        <div
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center font-extrabold text-xs shrink-0 ${
+                            isSelected
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-white text-gray-700 border border-gray-200'
+                          }`}
+                        >
+                          {sub.nomor}
+                        </div>
 
                     <div className="flex-1 min-w-0">
                       <h3
@@ -526,10 +610,52 @@ export default function GuruKelasView({
           )}
         </div>
       </div>
+    </div>
+  )}
+
+      {/* SECTION 2: GAME EDUKASI INTERAKTIF */}
+      {activeSection === 'game' && (
+        <div className="space-y-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Gamepad2 className="w-5 h-5 text-amber-600" />
+              <span><strong>Modul Game Edukasi:</strong> Pembelajaran interaktif berbasis game untuk kelas {selectedClass.nama} ({selectedClass.mapel}).</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveSection('materi')}
+              className="text-amber-800 hover:text-amber-950 font-bold underline cursor-pointer"
+            >
+              ← Kembali ke Materi
+            </button>
+          </div>
+          <GuruGameView />
+        </div>
+      )}
+
+      {/* SECTION 3: QUIZ & EVALUASI */}
+      {activeSection === 'quiz' && (
+        <div className="space-y-4">
+          <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 text-xs text-indigo-900 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CheckSquare className="w-5 h-5 text-indigo-600" />
+              <span><strong>Modul Quiz & Evaluasi:</strong> Bank soal kuis dan evaluasi belajar kelas {selectedClass.nama}.</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveSection('materi')}
+              className="text-indigo-800 hover:text-indigo-950 font-bold underline cursor-pointer"
+            >
+              ← Kembali ke Materi
+            </button>
+          </div>
+          <GuruQuizView students={students} setStudents={setStudents} />
+        </div>
+      )}
 
       {/* ================= MODAL: LEMBAR PRESENSI HARIAN SISWA ================= */}
       {isAttendanceModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white w-full max-w-2xl rounded-3xl shadow-xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/60">
               <div className="flex items-center gap-2.5">
@@ -538,10 +664,10 @@ export default function GuruKelasView({
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold text-gray-900">
-                    Lembar Presensi Harian: {selectedClass.nama}
+                    Lembar Presensi: {selectedClass.nama}
                   </h3>
                   <p className="text-xs text-gray-400">
-                    Tanggal: {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    Kelola dan tinjau log kehadiran harian siswa
                   </p>
                 </div>
               </div>
@@ -554,98 +680,214 @@ export default function GuruKelasView({
               </button>
             </div>
 
-            <form onSubmit={handleSaveAttendance} className="p-6 space-y-4 overflow-y-auto text-xs">
-              {/* Quick Summary & Mark All Present */}
-              <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-gray-50 rounded-2xl border border-gray-200">
-                <div className="flex items-center gap-4 font-bold">
-                  <span className="text-emerald-700">Hadir: {hadirCount}</span>
-                  <span className="text-blue-700">Izin: {izinCount}</span>
-                  <span className="text-amber-700">Sakit: {sakitCount}</span>
-                  <span className="text-rose-700">Alpa: {alpaCount}</span>
+            {/* TAB SELECTOR DALAM MODAL: Input Hari Ini vs Riwayat Log */}
+            <div className="flex border-b border-gray-100 px-6 bg-white gap-4">
+              <button
+                type="button"
+                onClick={() => setAttendanceModalTab('input')}
+                className={`py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+                  attendanceModalTab === 'input'
+                    ? 'border-emerald-600 text-emerald-700'
+                    : 'border-transparent text-gray-400 hover:text-gray-700'
+                }`}
+              >
+                <CalendarCheck className="w-4 h-4" />
+                <span>Input Presensi Hari Ini</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAttendanceModalTab('history')}
+                className={`py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+                  attendanceModalTab === 'history'
+                    ? 'border-emerald-600 text-emerald-700'
+                    : 'border-transparent text-gray-400 hover:text-gray-700'
+                }`}
+              >
+                <FileCheck className="w-4 h-4" />
+                <span>Riwayat Log Kehadiran ({mockAttendanceHistory.length} Sesi Terakhir)</span>
+              </button>
+            </div>
+
+            {/* TAB 1: FORM INPUT PRESENSI HARI INI */}
+            {attendanceModalTab === 'input' && (
+              <form onSubmit={handleSaveAttendance} className="p-6 space-y-4 overflow-y-auto text-xs">
+                {/* Quick Summary & Mark All Present */}
+                <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-gray-50 rounded-2xl border border-gray-200">
+                  <div className="flex items-center gap-4 font-bold">
+                    <span className="text-emerald-700">Hadir: {hadirCount}</span>
+                    <span className="text-blue-700">Izin: {izinCount}</span>
+                    <span className="text-amber-700">Sakit: {sakitCount}</span>
+                    <span className="text-rose-700">Alpa: {alpaCount}</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleMarkAllPresent}
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Tandai Semua Hadir</span>
+                  </button>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleMarkAllPresent}
-                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Tandai Semua Hadir</span>
-                </button>
-              </div>
+                {/* Student Attendance List */}
+                <div className="divide-y divide-gray-100 border border-gray-200 rounded-2xl overflow-hidden max-h-72 overflow-y-auto">
+                  {classStudents.map((siswa, idx) => {
+                    const currentStatus = attendanceRecords[siswa.id] || 'H';
 
-              {/* Student Attendance List */}
-              <div className="divide-y divide-gray-100 border border-gray-200 rounded-2xl overflow-hidden max-h-72 overflow-y-auto">
-                {classStudents.map((siswa, idx) => {
-                  const currentStatus = attendanceRecords[siswa.id] || 'H';
+                    return (
+                      <div key={siswa.id} className="p-3 flex items-center justify-between hover:bg-gray-50/80 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <span className="w-6 text-gray-400 font-mono text-[11px] font-bold">#{idx + 1}</span>
+                          <div>
+                            <p className="font-extrabold text-gray-900">{siswa.nama}</p>
+                            <span className="text-[10px] text-gray-400">NISN: {siswa.nisn}</span>
+                          </div>
+                        </div>
 
-                  return (
-                    <div key={siswa.id} className="p-3 flex items-center justify-between hover:bg-gray-50/80 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <span className="w-6 text-gray-400 font-mono text-[11px] font-bold">#{idx + 1}</span>
-                        <div>
-                          <p className="font-extrabold text-gray-900">{siswa.nama}</p>
-                          <span className="text-[10px] text-gray-400">NISN: {siswa.nisn}</span>
+                        {/* Radio Selection: H, I, S, A */}
+                        <div className="flex items-center gap-1.5">
+                          {[
+                            { key: 'H', label: 'H (Hadir)', color: 'peer-checked:bg-emerald-600 peer-checked:text-white' },
+                            { key: 'I', label: 'I (Izin)', color: 'peer-checked:bg-blue-600 peer-checked:text-white' },
+                            { key: 'S', label: 'S (Sakit)', color: 'peer-checked:bg-amber-500 peer-checked:text-white' },
+                            { key: 'A', label: 'A (Alpa)', color: 'peer-checked:bg-rose-600 peer-checked:text-white' },
+                          ].map((opt) => (
+                            <label key={opt.key} className="cursor-pointer">
+                              <input
+                                type="radio"
+                                name={`attendance-${siswa.id}`}
+                                value={opt.key}
+                                checked={currentStatus === opt.key}
+                                onChange={() =>
+                                  setAttendanceRecords({ ...attendanceRecords, [siswa.id]: opt.key })
+                                }
+                                className="sr-only peer"
+                              />
+                              <span
+                                className={`px-2.5 py-1 rounded-lg border border-gray-200 text-gray-600 text-[11px] font-bold transition-all ${opt.color}`}
+                              >
+                                {opt.key}
+                              </span>
+                            </label>
+                          ))}
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
 
-                      {/* Radio Selection: H, I, S, A */}
-                      <div className="flex items-center gap-1.5">
-                        {[
-                          { key: 'H', label: 'H (Hadir)', color: 'peer-checked:bg-emerald-600 peer-checked:text-white' },
-                          { key: 'I', label: 'I (Izin)', color: 'peer-checked:bg-blue-600 peer-checked:text-white' },
-                          { key: 'S', label: 'S (Sakit)', color: 'peer-checked:bg-amber-500 peer-checked:text-white' },
-                          { key: 'A', label: 'A (Alpa)', color: 'peer-checked:bg-rose-600 peer-checked:text-white' },
-                        ].map((opt) => (
-                          <label key={opt.key} className="cursor-pointer">
-                            <input
-                              type="radio"
-                              name={`attendance-${siswa.id}`}
-                              value={opt.key}
-                              checked={currentStatus === opt.key}
-                              onChange={() =>
-                                setAttendanceRecords({ ...attendanceRecords, [siswa.id]: opt.key })
-                              }
-                              className="sr-only peer"
-                            />
-                            <span
-                              className={`px-2.5 py-1 rounded-lg border border-gray-200 text-gray-600 text-[11px] font-bold transition-all ${opt.color}`}
-                            >
-                              {opt.key}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
+                {/* Information */}
+                <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-900 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <p>
+                    Siswa yang ditandai <strong>Alpa (A)</strong> akan secara otomatis ditandai sebagai <em>⚠️ Perlu Perhatian</em> di menu Monitoring Guru & Admin Sekolah.
+                  </p>
+                </div>
+
+                <div className="p-4 border-t border-gray-100 flex items-center justify-end gap-2 -mx-6 -mb-6 bg-gray-50">
+                  <button
+                    type="button"
+                    onClick={() => setIsAttendanceModalOpen(false)}
+                    className="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold rounded-xl"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <CalendarCheck className="w-3.5 h-3.5" />
+                    <span>Simpan Presensi Hari Ini</span>
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* TAB 2: RIWAYAT LOG PRESENSI LAMPAU */}
+            {attendanceModalTab === 'history' && (() => {
+              const currentHistory = mockAttendanceHistory.find((h) => h.tanggal === selectedHistoryDate) || mockAttendanceHistory[0];
+
+              return (
+                <div className="p-6 space-y-4 overflow-y-auto text-xs">
+                  {/* Date Selector Pills */}
+                  <div>
+                    <label className="text-[11px] font-bold text-gray-600 mb-1.5 block">
+                      Pilih Tanggal Sesi Presensi:
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {mockAttendanceHistory.map((item) => (
+                        <button
+                          key={item.tanggal}
+                          type="button"
+                          onClick={() => setSelectedHistoryDate(item.tanggal)}
+                          className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                            selectedHistoryDate === item.tanggal
+                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                              : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          {item.labelTanggal}
+                        </button>
+                      ))}
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
 
-              {/* Information */}
-              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-900 flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <p>
-                  Siswa yang ditandai <strong>Alpa (A)</strong> akan secara otomatis ditandai sebagai <em>⚠️ Perlu Perhatian</em> di menu Monitoring Guru & Admin Sekolah.
-                </p>
-              </div>
+                  {/* Summary Card for Selected Date */}
+                  <div className="p-3.5 bg-gray-50 rounded-2xl border border-gray-200 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-extrabold text-gray-900">Rekap Sesi: {currentHistory?.labelTanggal}</p>
+                      <p className="text-[11px] text-gray-500">Kelas: {selectedClass.nama}</p>
+                    </div>
+                    <div className="flex items-center gap-3 font-bold text-xs">
+                      <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-lg">Hadir: {currentHistory?.hadir}</span>
+                      <span className="px-2.5 py-1 bg-blue-100 text-blue-800 rounded-lg">Izin: {currentHistory?.izin}</span>
+                      <span className="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-lg">Sakit: {currentHistory?.sakit}</span>
+                      <span className="px-2.5 py-1 bg-rose-100 text-rose-800 rounded-lg">Alpa: {currentHistory?.alpa}</span>
+                    </div>
+                  </div>
 
-              <div className="p-4 border-t border-gray-100 flex items-center justify-end gap-2 -mx-6 -mb-6 bg-gray-50">
-                <button
-                  type="button"
-                  onClick={() => setIsAttendanceModalOpen(false)}
-                  className="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold rounded-xl"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer"
-                >
-                  <CalendarCheck className="w-3.5 h-3.5" />
-                  <span>Simpan Presensi Hari Ini</span>
-                </button>
-              </div>
-            </form>
+                  {/* Historical Student Status List */}
+                  <div className="divide-y divide-gray-100 border border-gray-200 rounded-2xl overflow-hidden max-h-72 overflow-y-auto">
+                    {currentHistory?.detail?.map((item, idx) => {
+                      const badgeMap = {
+                        H: { text: 'Hadir', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+                        I: { text: 'Izin', bg: 'bg-blue-50 text-blue-700 border-blue-200' },
+                        S: { text: 'Sakit', bg: 'bg-amber-50 text-amber-700 border-amber-200' },
+                        A: { text: 'Alpa', bg: 'bg-rose-50 text-rose-700 border-rose-200 font-extrabold' },
+                      };
+                      const badge = badgeMap[item.status] || badgeMap.H;
+
+                      return (
+                        <div key={item.siswaId} className="p-3 flex items-center justify-between hover:bg-gray-50/80 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <span className="w-6 text-gray-400 font-mono text-[11px] font-bold">#{idx + 1}</span>
+                            <div>
+                              <p className="font-extrabold text-gray-900">{item.nama}</p>
+                              <span className="text-[10px] text-gray-400">NISN: {item.nisn}</span>
+                            </div>
+                          </div>
+
+                          <span className={`px-3 py-1 rounded-lg border text-[11px] font-bold ${badge.bg}`}>
+                            {badge.text}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="p-4 border-t border-gray-100 flex items-center justify-end -mx-6 -mb-6 bg-gray-50">
+                    <button
+                      type="button"
+                      onClick={() => setIsAttendanceModalOpen(false)}
+                      className="px-5 py-2 bg-gray-800 hover:bg-gray-900 text-white font-bold rounded-xl shadow-xs text-xs cursor-pointer"
+                    >
+                      Tutup
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

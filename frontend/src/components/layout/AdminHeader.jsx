@@ -182,7 +182,7 @@ export default function AdminHeader({
 
         {/* Settings Modal */}
         {showSettingsModal && (
-          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
             <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-gray-100 p-6 space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                 <div className="flex items-center gap-2.5">
@@ -217,7 +217,7 @@ export default function AdminHeader({
                 </div>
                 <div className="p-3 bg-gray-50 rounded-2xl flex items-center justify-between">
                   <span className="text-gray-600 font-medium">Mode Aplikasi</span>
-                  <span className="font-bold text-blue-600">Pure Web SaaS (Online)</span>
+                  <span className="font-bold text-blue-600">Platform Web SaaS Terintegrasi</span>
                 </div>
                 <div className="p-3 bg-gray-50 rounded-2xl flex items-center justify-between">
                   <span className="text-gray-600 font-medium">Versi Rilis</span>

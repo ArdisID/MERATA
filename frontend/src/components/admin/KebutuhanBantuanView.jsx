@@ -35,6 +35,7 @@ export default function KebutuhanBantuanView({
   schoolProfile
 }) {
   const [activeSubTab, setActiveSubTab] = useState('verifikasi'); // 'verifikasi' | 'status-bantuan'
+  const [filterTipe, setFilterTipe] = useState('all'); // 'all' | 'guru' | 'siswa'
   const [filterKategori, setFilterKategori] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [adminNotes, setAdminNotes] = useState('');
@@ -48,9 +49,10 @@ export default function KebutuhanBantuanView({
       v.judul.toLowerCase().includes(globalSearch.toLowerCase()) ||
       v.pemohon.toLowerCase().includes(globalSearch.toLowerCase()) ||
       v.kategori.toLowerCase().includes(globalSearch.toLowerCase());
+    const matchTipe = filterTipe === 'all' || (v.tipe || 'guru') === filterTipe;
     const matchKategori = filterKategori === 'all' || v.kategori.includes(filterKategori);
     const matchStatus = filterStatus === 'all' || v.status === filterStatus;
-    return matchSearch && matchKategori && matchStatus;
+    return matchSearch && matchTipe && matchKategori && matchStatus;
   });
 
   const showToast = (msg) => {
@@ -256,25 +258,40 @@ export default function KebutuhanBantuanView({
                 <Filter className="w-3.5 h-3.5" /> Filter:
               </span>
 
+              {/* Filter Tipe Pemohon (Guru vs Siswa) */}
+              <select
+                value={filterTipe}
+                onChange={(e) => setFilterTipe(e.target.value)}
+                className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+              >
+                <option value="all">Semua Pemohon (Guru & Siswa)</option>
+                <option value="guru">Kebutuhan Guru & Sarpras</option>
+                <option value="siswa">Kebutuhan Siswa & Bansos</option>
+              </select>
+
+              {/* Filter Status Pengajuan (Semua Status / All) */}
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
               >
-                <option value="all">Semua Status</option>
+                <option value="all">Semua Status (All)</option>
                 <option value="menunggu">Menunggu Verifikasi</option>
-                <option value="disetujui_sekolah">Disetujui Sekolah</option>
+                <option value="disetujui_sekolah">Disetujui Sekolah (RKAS)</option>
                 <option value="diteruskan_pemda">Diteruskan ke Pemda</option>
                 <option value="disetujui_pemda">Disetujui Pemda</option>
                 <option value="perlu_revisi">Perlu Revisi</option>
+                <option value="ditolak">Ditolak</option>
               </select>
 
+              {/* Filter Kategori */}
               <select
                 value={filterKategori}
                 onChange={(e) => setFilterKategori(e.target.value)}
                 className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
               >
                 <option value="all">Semua Kategori</option>
+                <option value="Bantuan Siswa">Bantuan Siswa & KIP</option>
                 <option value="Peralatan">Peralatan & IT</option>
                 <option value="Pemeliharaan">Pemeliharaan Sarpras</option>
                 <option value="Administrasi">Administrasi Data</option>
@@ -316,7 +333,16 @@ export default function KebutuhanBantuanView({
                     </td>
 
                     <td className="py-3.5 px-3">
-                      <div className="font-semibold text-slate-800">{row.pemohon}</div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-semibold text-slate-800">{row.pemohon}</span>
+                        <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${
+                          row.tipe === 'siswa'
+                            ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                            : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        }`}>
+                          {row.tipe === 'siswa' ? 'Siswa' : 'Guru'}
+                        </span>
+                      </div>
                       <div className="text-[11px] text-slate-400">{row.peranPemohon}</div>
                     </td>
 
@@ -384,7 +410,16 @@ export default function KebutuhanBantuanView({
                 <div className="flex items-center justify-between text-xs py-2 px-3 bg-white rounded-xl border border-slate-100">
                   <div>
                     <span className="text-[10px] text-slate-400 block font-medium">Pemohon</span>
-                    <strong className="text-slate-800 font-semibold">{row.pemohon}</strong>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <strong className="text-slate-800 font-semibold">{row.pemohon}</strong>
+                      <span className={`px-1.5 py-0.2 text-[9px] font-bold rounded ${
+                        row.tipe === 'siswa'
+                          ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                      }`}>
+                        {row.tipe === 'siswa' ? 'Siswa' : 'Guru'}
+                      </span>
+                    </div>
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] text-slate-400 block font-medium">Estimasi Biaya</span>
@@ -469,11 +504,22 @@ export default function KebutuhanBantuanView({
 
       {/* ================= MODAL VERIFIKASI ================= */}
       {isVerifyModalOpen && selectedVerification && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
               <div>
-                <h3 className="text-base font-bold text-slate-900">Tinjau Pengajuan Sarpras</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-slate-900">
+                    {selectedVerification.tipe === 'siswa' ? 'Tinjau Kebutuhan Siswa' : 'Tinjau Kebutuhan Guru & Sarpras'}
+                  </h3>
+                  <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full border ${
+                    selectedVerification.tipe === 'siswa'
+                      ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}>
+                    {selectedVerification.tipe === 'siswa' ? 'Kebutuhan Siswa' : 'Kebutuhan Guru'}
+                  </span>
+                </div>
                 <p className="text-xs text-slate-400">ID: {selectedVerification.id} • {selectedVerification.pemohon}</p>
               </div>
               <button
@@ -574,7 +620,7 @@ export default function KebutuhanBantuanView({
 
       {/* ================= MODAL KONFIRMASI PENERIMAAN ================= */}
       {confirmReceiveModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col">
             <div className="p-6 text-center space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
