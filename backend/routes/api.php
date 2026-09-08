@@ -21,12 +21,12 @@ use Illuminate\Support\Facades\Route;
 
 // ==================== PUBLIC ROUTES ====================
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout']);
 
 // ==================== AUTHENTICATED ROUTES ====================
 Route::middleware('auth:sanctum')->group(function () {
 
     // Auth
-    Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
     // File Upload
@@ -66,11 +66,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/siswa', [AdminController::class, 'siswaList']);
         Route::post('/siswa', [AdminController::class, 'storeSiswa']);
         Route::put('/siswa/{id}', [AdminController::class, 'updateSiswa']);
+        Route::delete('/siswa/{id}', [AdminController::class, 'deleteSiswa']);
         Route::get('/guru', [AdminController::class, 'guruList']);
+        Route::post('/guru', [AdminController::class, 'storeGuru']);
+        Route::put('/guru/{id}', [AdminController::class, 'updateGuru']);
+        Route::delete('/guru/{id}', [AdminController::class, 'deleteGuru']);
         Route::get('/kelas', [AdminController::class, 'kelasList']);
         Route::get('/fasilitas', [AdminController::class, 'fasilitasList']);
         Route::post('/fasilitas', [AdminController::class, 'storeFasilitas']);
         Route::put('/fasilitas/{id}', [AdminController::class, 'updateFasilitas']);
+        Route::delete('/fasilitas/{id}', [AdminController::class, 'deleteFasilitas']);
 
         // Kebutuhan & Bantuan
         Route::get('/verifikasi', [KebutuhanController::class, 'verifikasiList']);

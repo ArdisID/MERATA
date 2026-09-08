@@ -145,6 +145,21 @@ class AdminController extends Controller
     }
 
     /**
+     * DELETE /api/admin/fasilitas/{id}
+     */
+    public function deleteFasilitas($id)
+    {
+        $fasilitas = Fasilitas::find($id);
+        if ($fasilitas) {
+            $fasilitas->delete();
+        }
+
+        return response()->json([
+            'message' => 'Fasilitas berhasil dihapus.',
+        ]);
+    }
+
+    /**
      * Create a new student.
      * POST /api/admin/siswa
      */
@@ -219,5 +234,108 @@ class AdminController extends Controller
             'message' => 'Fasilitas berhasil ditambahkan.',
             'fasilitas' => $fasilitas,
         ], 201);
+    }
+
+    /**
+     * Create a new teacher.
+     * POST /api/admin/guru
+     */
+    public function storeGuru(Request $request)
+    {
+        $request->validate([
+            'nama' => 'required|string',
+            'mapel' => 'required|string',
+        ]);
+
+        $sekolah = Sekolah::first();
+        $count = Guru::count() + 1;
+        $kode = 'GUR-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+
+        $kelasAjar = $request->kelas_ajar;
+        if (is_string($kelasAjar)) {
+            $kelasAjar = array_map('trim', explode(',', $kelasAjar));
+        }
+
+        $guru = Guru::create([
+            'sekolah_id' => $sekolah ? $sekolah->id : 1,
+            'kode' => $kode,
+            'nip' => $request->nip ?? '-',
+            'nama' => $request->nama,
+            'gender' => $request->gender ?? 'Laki-laki',
+            'mapel' => $request->mapel,
+            'kelas_ajar' => $kelasAjar ?? ['Kelas 7', 'Kelas 8'],
+            'jabatan' => $request->jabatan ?? 'Guru Mata Pelajaran',
+            'status_kepegawaian' => $request->status_kepegawaian ?? 'Honorer / Kontrak',
+            'sertifikasi' => $request->sertifikasi ?? 'Belum',
+            'pendidikan' => $request->pendidikan ?? 'S1 Pendidikan',
+            'lama_mengajar' => $request->lama_mengajar ?? '1 Tahun',
+            'poin_kontribusi' => 0,
+            'telepon' => $request->telepon ?? '08123456789',
+            'email' => $request->email ?? ('guru' . $count . '@merata.sch.id'),
+            'kebutuhan' => $request->kebutuhan ?? '-',
+        ]);
+
+        return response()->json([
+            'message' => 'Data guru berhasil ditambahkan.',
+            'guru' => $guru,
+        ], 201);
+    }
+
+    /**
+     * Update teacher data.
+     * PUT /api/admin/guru/{id}
+     */
+    public function updateGuru(Request $request, $id)
+    {
+        $guru = Guru::where('id', $id)->orWhere('kode', $id)->firstOrFail();
+
+        $data = $request->only([
+            'nama', 'nip', 'gender', 'mapel', 'jabatan',
+            'status_kepegawaian', 'sertifikasi', 'pendidikan',
+            'lama_mengajar', 'telepon', 'email', 'kebutuhan'
+        ]);
+
+        if ($request->has('kelas_ajar')) {
+            $kelasAjar = $request->kelas_ajar;
+            if (is_string($kelasAjar)) {
+                $kelasAjar = array_map('trim', explode(',', $kelasAjar));
+            }
+            $data['kelas_ajar'] = $kelasAjar;
+        }
+
+        $guru->update($data);
+
+        return response()->json([
+            'message' => 'Data guru berhasil diperbarui.',
+            'guru' => $guru->fresh(),
+        ]);
+    }
+
+    /**
+     * Delete teacher.
+     * DELETE /api/admin/guru/{id}
+     */
+    public function deleteGuru($id)
+    {
+        $guru = Guru::where('id', $id)->orWhere('kode', $id)->firstOrFail();
+        $guru->delete();
+
+        return response()->json([
+            'message' => 'Data guru berhasil dihapus.',
+        ]);
+    }
+
+    /**
+     * Delete student.
+     * DELETE /api/admin/siswa/{id}
+     */
+    public function deleteSiswa($id)
+    {
+        $siswa = Siswa::where('id', $id)->orWhere('kode', $id)->firstOrFail();
+        $siswa->delete();
+
+        return response()->json([
+            'message' => 'Data siswa berhasil dihapus.',
+        ]);
     }
 }

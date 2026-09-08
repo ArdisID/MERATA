@@ -21,7 +21,12 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $email = $request->email;
+        if ($email === 'pemda@merata.id') {
+            $email = 'pemerintah@merata.id';
+        }
+
+        $user = User::where('email', $email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
@@ -53,7 +58,14 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        try {
+            $user = $request->user('sanctum') ?? $request->user();
+            if ($user && $user->currentAccessToken()) {
+                $user->currentAccessToken()->delete();
+            }
+        } catch (\Throwable $e) {
+            // Silently ignore if token is already revoked or missing
+        }
 
         return response()->json([
             'message' => 'Logout berhasil',

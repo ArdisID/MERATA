@@ -94,6 +94,63 @@ class KebutuhanSeeder extends Seeder
             'tipe' => 'verifikasi',
         ]);
 
+        Kebutuhan::create([
+            'sekolah_id' => $sekolah?->id,
+            'kode' => 'VRF-005',
+            'judul' => 'Bantuan Perlengkapan Seragam & Sepatu Sekolah Siswa Afirmasi',
+            'kategori' => 'Bantuan Siswa & KIP',
+            'pemohon' => 'Rian Pratama (Siswa Kelas 7A)',
+            'peran_pemohon' => 'Siswa Afirmasi Prasejahtera',
+            'tanggal' => '29 Agt 2026',
+            'urgensi' => 'Mendesak',
+            'urgensi_badge' => 'bg-red-50 text-red-700 border-red-200',
+            'estimasi_biaya' => 'Rp 650.000',
+            'justifikasi' => 'Sepatu siswa robek dan belum memiliki seragam olahraga serta batik resmi sekolah karena kendala ekonomi keluarga.',
+            'status' => 'menunggu',
+            'status_label' => 'Menunggu Verifikasi',
+            'catatan_admin' => '',
+            'lampiran' => 'Surat_Keterangan_Tidak_Mampu.pdf (620 KB)',
+            'tipe' => 'kebutuhan_siswa',
+        ]);
+
+        Kebutuhan::create([
+            'sekolah_id' => $sekolah?->id,
+            'kode' => 'VRF-006',
+            'judul' => 'Pengadaan Kacamata Koreksi Minus Siswa Penerima KIP',
+            'kategori' => 'Bantuan Siswa & KIP',
+            'pemohon' => 'Aisyah Putri Azzahra (Siswa Kelas 8A)',
+            'peran_pemohon' => 'Siswa Penerima KJP Plus',
+            'tanggal' => '28 Agt 2026',
+            'urgensi' => 'Sedang',
+            'urgensi_badge' => 'bg-blue-50 text-blue-700 border-blue-200',
+            'estimasi_biaya' => 'Rp 450.000',
+            'justifikasi' => 'Siswa mengalami kesulitan membaca papan tulis dan layar pembelajaran, membutuhkan kacamata silindris minus.',
+            'status' => 'disetujui_sekolah',
+            'status_label' => 'Disetujui Sekolah',
+            'catatan_admin' => 'Disetujui dialokasikan melalui program kepedulian sosial dana komite sekolah.',
+            'lampiran' => 'Hasil_Pemeriksaan_Mata_Puskesmas.pdf (310 KB)',
+            'tipe' => 'kebutuhan_siswa',
+        ]);
+
+        Kebutuhan::create([
+            'sekolah_id' => $sekolah?->id,
+            'kode' => 'VRF-007',
+            'judul' => 'Bantuan Peminjaman Tablet Pembelajaran Mandiri Siswa 3T',
+            'kategori' => 'Bantuan Siswa & KIP',
+            'pemohon' => 'Clarissa Maharani (Siswa Kelas 7B)',
+            'peran_pemohon' => 'Siswa Penerima KIP',
+            'tanggal' => '25 Agt 2026',
+            'urgensi' => 'Sedang',
+            'urgensi_badge' => 'bg-blue-50 text-blue-700 border-blue-200',
+            'estimasi_biaya' => 'Rp 1.800.000',
+            'justifikasi' => 'Peminjaman tablet dari perpustakaan sekolah untuk mengerjakan modul literasi dan asesmen harian di rumah.',
+            'status' => 'diteruskan_pemda',
+            'status_label' => 'Diteruskan ke Pemerintah',
+            'catatan_admin' => 'Diusulkan masuk kuota bantuan perangkat siswa Program Indonesia Pintar (PIP) Dinas.',
+            'lampiran' => 'Formulir_Pengajuan_Tablet_Siswa.pdf (410 KB)',
+            'tipe' => 'kebutuhan_siswa',
+        ]);
+
         // From mockGuruData.js → initialTeacherNeeds (3 kebutuhan guru entries)
         Kebutuhan::create([
             'sekolah_id' => $sekolah?->id,
