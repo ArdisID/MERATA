@@ -21,7 +21,9 @@ export default function AdminHeader({
   setGlobalSearch,
   notificationCount = 3,
   setCurrentRoute,
-  liveNotifications
+  liveNotifications,
+  currentUser = null,
+  schoolProfile = {}
 }) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -248,27 +250,33 @@ export default function AdminHeader({
             className="flex items-center gap-3 p-1 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer text-left"
           >
             <img
-              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120"
+              src={currentUser?.avatar || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120"}
               alt="Avatar Operator"
               className="w-8 h-8 rounded-full object-cover ring-2 ring-emerald-100"
             />
-            <div className="hidden md:block text-left pr-1">
-              <p className="text-xs font-bold text-gray-900 leading-tight">Admin Sekolah</p>
-              <p className="text-[11px] text-gray-400 font-medium">Operator Utama</p>
+            <div className="hidden md:block text-left pr-1 max-w-[160px]">
+              <p className="text-xs font-bold text-gray-900 leading-tight truncate">
+                {currentUser?.name || 'Admin Sekolah'}
+              </p>
+              <p className="text-[11px] text-gray-400 font-medium truncate">
+                {schoolProfile?.nama || currentUser?.sekolah?.nama || 'Operator Utama'}
+              </p>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-gray-400 hidden md:block" />
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-xs">
+            <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-xs">
               <div className="px-3.5 py-2.5 border-b border-gray-100">
-                <p className="font-bold text-gray-900">Admin Dapodik</p>
-                <p className="text-[11px] text-gray-400 mt-0.5">admin@merata.id</p>
+                <p className="font-bold text-gray-900 truncate">{currentUser?.name || 'Admin Sekolah'}</p>
+                <p className="text-[11px] text-gray-400 mt-0.5 truncate">{currentUser?.email || 'admin@merata.id'}</p>
                 <div className="mt-1.5 flex items-center gap-1.5">
-                  <span className="inline-block px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-semibold">
+                  <span className="inline-block px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-semibold shrink-0">
                     Administrator
                   </span>
-                  <span className="text-[10px] text-gray-400">Tata Usaha & Sarpras</span>
+                  <span className="text-[10px] text-gray-500 font-medium truncate">
+                    {schoolProfile?.nama || currentUser?.sekolah?.nama || 'Dapodik'}
+                  </span>
                 </div>
               </div>
               <div className="p-1">

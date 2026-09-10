@@ -14,7 +14,9 @@ class SekolahController extends Controller
      */
     public function show(Request $request)
     {
-        $sekolah = Sekolah::first();
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+        $sekolah = Sekolah::find($sekolahId);
 
         if (!$sekolah) {
             return response()->json(['message' => 'Data sekolah tidak ditemukan.'], 404);
@@ -29,7 +31,9 @@ class SekolahController extends Controller
      */
     public function update(Request $request)
     {
-        $sekolah = Sekolah::first();
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+        $sekolah = Sekolah::find($sekolahId);
 
         if (!$sekolah) {
             return response()->json(['message' => 'Data sekolah tidak ditemukan.'], 404);
@@ -38,7 +42,7 @@ class SekolahController extends Controller
         $sekolah->update($request->only([
             'nama', 'npsn', 'akreditasi', 'status_sekolah', 'jenjang',
             'kepala_sekolah', 'nip_kepsek', 'operator', 'alamat', 'wilayah',
-            'kode_pos', 'telepon', 'email', 'website', 'kurikulum',
+            'kode_pos', 'telepon', 'email', 'website', 'kurikulum', 'foto',
         ]));
 
         return response()->json([

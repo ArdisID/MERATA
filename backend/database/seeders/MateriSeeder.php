@@ -155,12 +155,13 @@ class MateriSeeder extends Seeder
             ],
         ];
 
+        // Submateri for MAT-001 (SD)
         foreach ($submateris as $sub) {
             Submateri::create(array_merge($sub, ['materi_id' => $mat1->id]));
         }
 
-        // From mockGuruData.js → mockQuizData
-        $quiz = Quiz::create([
+        // Quiz for MAT-001 (SD)
+        $quiz1 = Quiz::create([
             'materi_id' => $mat1->id,
             'kode' => 'QZ-PEC-01',
             'judul' => 'Quiz Evaluasi: Pemahaman Dasar Pecahan',
@@ -170,7 +171,7 @@ class MateriSeeder extends Seeder
             'deskripsi' => 'Uji pemahaman konsep pecahan biasa, desimal, campuran, dan operasi hitung.',
         ]);
 
-        $soals = [
+        $soals1 = [
             ['nomor' => 1, 'pertanyaan' => 'Sebuah semangka dipotong menjadi 6 bagian sama besar. Dina memakan 2 potong. Bagian semangka yang dimakan Dina adalah...', 'opsi' => ['1/6 bagian', '2/6 (atau 1/3) bagian', '2/4 bagian', '4/6 bagian'], 'kunci' => 1, 'penjelasan' => 'Dina memakan 2 dari 6 potong total, jadi bernilai 2/6. Jika disederhanakan dibagi 2 menjadi 1/3.'],
             ['nomor' => 2, 'pertanyaan' => 'Bentuk pecahan desimal dari pecahan 3/4 adalah...', 'opsi' => ['0,34', '0,50', '0,75', '0,80'], 'kunci' => 2, 'penjelasan' => '3/4 = (3 × 25) / (4 × 25) = 75/100 = 0,75.'],
             ['nomor' => 3, 'pertanyaan' => 'Tanda perbandingan yang tepat untuk 3/5 ... 2/3 adalah...', 'opsi' => ['< (Lebih kecil)', '> (Lebih besar)', '= (Sama dengan)', '>= (Lebih besar atau sama)'], 'kunci' => 0, 'penjelasan' => 'Kali silang: 3 × 3 = 9, sedangkan 5 × 2 = 10. Karena 9 < 10, maka 3/5 < 2/3.'],
@@ -178,11 +179,10 @@ class MateriSeeder extends Seeder
             ['nomor' => 5, 'pertanyaan' => 'Hasil dari penjumlahan 1/3 + 1/2 adalah...', 'opsi' => ['2/5', '5/6', '1/6', '2/6'], 'kunci' => 1, 'penjelasan' => 'KPK 3 dan 2 adalah 6. (1×2)/6 + (1×3)/6 = 2/6 + 3/6 = 5/6.'],
         ];
 
-        foreach ($soals as $s) {
-            QuizSoal::create(array_merge($s, ['quiz_id' => $quiz->id]));
+        foreach ($soals1 as $s) {
+            QuizSoal::create(array_merge($s, ['quiz_id' => $quiz1->id]));
         }
 
-        // From mockGuruData.js → initialMatchingCards & orderingGameInitial
         GameDataset::create([
             'materi_id' => $mat1->id,
             'tipe_game' => 'matching',
@@ -210,5 +210,276 @@ class MateriSeeder extends Seeder
                 ['id' => 'item-4', 'label' => '1 (Utuh)', 'desimal' => '1,00', 'value' => 1.00],
             ],
         ]);
+
+        // =========================================================================
+        // SUBMATERI & QUIZ FOR MAT-002 (SMP: Algoritma Scratch)
+        // =========================================================================
+        $mat2 = Materi::where('kode', 'MAT-002')->first();
+        if ($mat2) {
+            $subMat2 = [
+                [
+                    'nomor' => 1,
+                    'judul' => '4 Pilar Berpikir Komputasional',
+                    'durasi' => '2 JP (80 Menit)',
+                    'tujuan' => ['Memahami dekomposisi, pengenalan pola, abstraksi, dan perancangan algoritma.'],
+                    'materi_utama' => "Berpikir komputasional adalah metode pemecahan masalah dengan menerapkan prinsip-prinsip ilmu komputer.\n\n4 Pilar Utama:\n1. Dekomposisi: Memecah masalah kompleks menjadi sub-masalah yang lebih kecil.\n2. Pengenalan Pola: Mengidentifikasi kesamaan antar masalah yang pernah dihadapi.\n3. Abstraksi: Fokus pada informasi penting dan mengabaikan detail yang tidak relevan.\n4. Algoritma: Menyusun langkah-langkah terurut logis untuk menyelesaikan solusi.",
+                ],
+                [
+                    'nomor' => 2,
+                    'judul' => 'Logika Algoritma & Flowchart',
+                    'durasi' => '2 JP (80 Menit)',
+                    'tujuan' => ['Membuat bagan alir simbol standar dan pseudocode percabangan.'],
+                    'materi_utama' => "Flowchart menggunakan simbol baku:\n• Terminator (Oval): Mulai / Selesai\n• Proses (Persegi Panjang): Langkah eksekusi / kalkulasi\n• Keputusan (Belah Ketupat): Percabangan Ya / Tidak\n• Input/Output (Jajar Genjang): Masukan dan Luaran data.",
+                ],
+                [
+                    'nomor' => 3,
+                    'judul' => 'Implementasi Visual Coding Scratch',
+                    'durasi' => '4 JP (160 Menit)',
+                    'tujuan' => ['Membuat animasi interaktif dengan sprite, backdrop, loops, dan conditional.'],
+                    'materi_utama' => "Pada Scratch, blok perintah disusun seperti puzzle:\n• Events: 'When green flag clicked' memicu program.\n• Motion: Memindahkan sprite sejauh langkah tertentu.\n• Control: Blok 'repeat', 'forever', dan 'if-then'.\n• Sensing: Mendeteksi sentuhan kursor atau tombol keyboard.",
+                ],
+            ];
+            foreach ($subMat2 as $sub) {
+                Submateri::create(array_merge($sub, ['materi_id' => $mat2->id]));
+            }
+
+            $quiz2 = Quiz::create([
+                'materi_id' => $mat2->id,
+                'kode' => 'QZ-CMP-01',
+                'judul' => 'Quiz Berpikir Komputasional & Scratch',
+                'topik' => 'Informatika SMP Kelas 7 - Bab 1',
+                'durasi_menit' => 10,
+                'kkm' => 75,
+                'deskripsi' => 'Uji pemahaman pilar komputasional dan pemrograman blok visual.',
+            ]);
+
+            $soals2 = [
+                ['nomor' => 1, 'pertanyaan' => 'Memecah masalah besar menjadi bagian-bagian kecil yang mudah dikelola disebut...', 'opsi' => ['Dekomposisi', 'Abstraksi', 'Pengenalan Pola', 'Algoritma'], 'kunci' => 0, 'penjelasan' => 'Dekomposisi adalah teknik memecah permasalahan menjadi komponen yang lebih sederhana.'],
+                ['nomor' => 2, 'pertanyaan' => 'Simbol belah ketupat pada diagram alir (flowchart) melambangkan...', 'opsi' => ['Mulai/Selesai', 'Proses perhitungan', 'Keputusan / Percabangan', 'Input data'], 'kunci' => 2, 'penjelasan' => 'Belah ketupat digunakan untuk Decision (keputusan berkondisi Ya/Tidak).'],
+                ['nomor' => 3, 'pertanyaan' => 'Blok perintah di Scratch yang digunakan untuk mengulang aksi tanpa batas adalah...', 'opsi' => ['repeat 10', 'forever', 'if then', 'wait 1 secs'], 'kunci' => 1, 'penjelasan' => 'Blok forever menjalankan blok di dalamnya terus menerus hingga program dihentikan.'],
+            ];
+            foreach ($soals2 as $s) {
+                QuizSoal::create(array_merge($s, ['quiz_id' => $quiz2->id]));
+            }
+
+            GameDataset::create([
+                'materi_id' => $mat2->id,
+                'tipe_game' => 'matching',
+                'judul' => 'Pilar Berpikir Komputasional',
+                'data' => [
+                    ['id' => 1, 'pairId' => 'p1', 'value' => 'Dekomposisi', 'type' => 'Pilar'],
+                    ['id' => 2, 'pairId' => 'p1', 'value' => 'Memecah Masalah Kompleks', 'type' => 'Definisi'],
+                    ['id' => 3, 'pairId' => 'p2', 'value' => 'Abstraksi', 'type' => 'Pilar'],
+                    ['id' => 4, 'pairId' => 'p2', 'value' => 'Menyaring Hal Penting', 'type' => 'Definisi'],
+                    ['id' => 5, 'pairId' => 'p3', 'value' => 'Algoritma', 'type' => 'Pilar'],
+                    ['id' => 6, 'pairId' => 'p3', 'value' => 'Langkah Terurut Sistematis', 'type' => 'Definisi'],
+                ],
+            ]);
+        }
+
+        // =========================================================================
+        // 4. SMK: MAT-004 — TEKNIK JARINGAN KOMPUTER & TELEKOMUNIKASI
+        // =========================================================================
+        $mat4 = Materi::create([
+            'kode' => 'MAT-004',
+            'jenjang' => 'SMK / Fase E',
+            'kelas' => 'Kelas 10 SMK',
+            'mapel' => 'Teknik Komputer & Jaringan',
+            'topik' => 'Dasar Jaringan Komputer, Model OSI & Subnetting IPv4',
+            'jumlah_submateri' => 3,
+            'author' => 'Direktorat SMK Kemendikbudristek & Komite Vokasi Nasional',
+            'tanggal_terbit' => '25 Agt 2026',
+            'status' => 'Terdistribusi Nasional',
+            'badge' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            'deskripsi' => 'Pengenalan arsitektur TCP/IP, OSI 7 Layer, pengkabelan UTP standar TIA/EIA-568B, perhitungan subnet mask, network address, dan broadcast address.',
+        ]);
+
+        $subMat4 = [
+            [
+                'nomor' => 1,
+                'judul' => 'Model Referensi OSI 7 Layer & TCP/IP',
+                'durasi' => '4 JP (180 Menit)',
+                'tujuan' => ['Memahami fungsi tiap layer OSI: Physical, Data Link, Network, Transport, Session, Presentation, Application.'],
+                'materi_utama' => "Model OSI (Open Systems Interconnection) membagi komunikasi jaringan menjadi 7 lapisan:\n1. Physical: Transmisi sinyal bit fisik (kabel tembaga, fiber optic, wireless).\n2. Data Link: Pengalamatan fisik (MAC Address) dan framing (Switch Layer 2).\n3. Network: Pengalamatan logis (IP Address) dan routing paket (Router).\n4. Transport: Pengiriman data andal (TCP) atau cepat (UDP) serta nomor port.\n5. Session: Manajemen koneksi antar sesi aplikasi.\n6. Presentation: Enkripsi, kompresi, dan format data (SSL/TLS, ASCII, JPEG).\n7. Application: Antarmuka langsung ke pengguna (HTTP, HTTPS, DNS, FTP).",
+            ],
+            [
+                'nomor' => 2,
+                'judul' => 'Pengalamatan IPv4 & Teknik Subnetting CIDR',
+                'durasi' => '4 JP (180 Menit)',
+                'tujuan' => ['Menghitung Network ID, Broadcast ID, Host Valid, dan Subnet Mask notasi CIDR /24 - /30.'],
+                'materi_utama' => "Alamat IPv4 terdiri dari 32 bit yang dibagi menjadi 4 oktet (8 bit per oktet).\n\nRumus Dasar Subnetting:\n• Jumlah Subnet = 2^x (x = jumlah bit 1 pada host portion yang dipinjam)\n• Jumlah Host per Subnet = 2^y - 2 (y = sisa bit 0 pada host)\n\nContoh Prefix /26 (255.255.255.192):\n• Nilai bit akhir: 11000000 (128 + 64 = 192)\n• Blok subnet = 256 - 192 = 64\n• Subnet rentang: 0, 64, 128, 192\n• Host yang bisa digunakan per blok: 64 - 2 = 62 host.",
+            ],
+            [
+                'nomor' => 3,
+                'judul' => 'Konfigurasi Mikrotik RouterOS Dasar',
+                'durasi' => '4 JP (180 Menit)',
+                'tujuan' => ['Konfigurasi IP Address, DHCP Server, NAT Masquerade, dan DNS Server di Routerboard.'],
+                'materi_utama' => "Langkah Praktik Dasar Router MikroTik:\n1. Akses Router via Winbox menggunakan MAC Address.\n2. Tambahkan IP Address pada ether1 (WAN) dan ether2 (LAN).\n3. Buat IP Pool dan aktifkan DHCP Server pada interface ether2.\n4. Konfigurasi IP Firewall NAT: chain=srcnat action=masquerade out-interface=ether1.\n5. Isi IP DNS Server Google (8.8.8.8) dan centang 'Allow Remote Requests'.",
+            ],
+        ];
+
+        foreach ($subMat4 as $sub) {
+            Submateri::create(array_merge($sub, ['materi_id' => $mat4->id]));
+        }
+
+        $quiz4 = Quiz::create([
+            'materi_id' => $mat4->id,
+            'kode' => 'QZ-TKJ-01',
+            'judul' => 'Quiz Uji Kompetensi Dasar Jaringan & Subnetting',
+            'topik' => 'TKJ SMK Kelas X - Praktik Jaringan Komputer',
+            'durasi_menit' => 15,
+            'kkm' => 78,
+            'deskripsi' => 'Uji pemahaman konsep layer OSI, subnet mask, nomor port jaringan, dan konfigurasi IP.',
+        ]);
+
+        $soals4 = [
+            ['nomor' => 1, 'pertanyaan' => 'Layer pada model OSI yang bertugas menentukan jalur terbaik (routing) dan menggunakan IP Address adalah...', 'opsi' => ['Physical Layer', 'Data Link Layer', 'Network Layer', 'Transport Layer'], 'kunci' => 2, 'penjelasan' => 'Network Layer (Layer 3) bertanggung jawab atas routing logis dan paket data menggunakan IP.'],
+            ['nomor' => 2, 'pertanyaan' => 'Jumlah host yang dapat digunakan (usable IP) pada subnet dengan prefix /29 adalah...', 'opsi' => ['6 host', '8 host', '14 host', '30 host'], 'kunci' => 0, 'penjelasan' => 'Prefix /29 menyisakan 3 bit host (32 - 29 = 3). Jumlah host = 2^3 - 2 = 8 - 2 = 6 host.'],
+            ['nomor' => 3, 'pertanyaan' => 'Port standar yang digunakan untuk protokol web aman HTTPS adalah...', 'opsi' => ['Port 80', 'Port 21', 'Port 443', 'Port 22'], 'kunci' => 2, 'penjelasan' => 'HTTPS berjalan pada TCP Port 443, sedangkan HTTP menggunakan Port 80.'],
+            ['nomor' => 4, 'pertanyaan' => 'Fitur MikroTik Firewall NAT yang berfungsi menerjemahkan IP private lokal ke IP publik internet adalah...', 'opsi' => ['Accept', 'Drop', 'Masquerade', 'Redirect'], 'kunci' => 2, 'penjelasan' => 'Action Masquerade menyamarkan alamat IP sumber lokal menjadi IP interface out WAN.'],
+        ];
+
+        foreach ($soals4 as $s) {
+            QuizSoal::create(array_merge($s, ['quiz_id' => $quiz4->id]));
+        }
+
+        GameDataset::create([
+            'materi_id' => $mat4->id,
+            'tipe_game' => 'matching',
+            'judul' => 'Matching Protokol Jaringan & Nomor Port',
+            'data' => [
+                ['id' => 1, 'pairId' => 'p1', 'value' => 'HTTP', 'type' => 'Protokol'],
+                ['id' => 2, 'pairId' => 'p1', 'value' => 'Port 80', 'type' => 'Port'],
+                ['id' => 3, 'pairId' => 'p2', 'value' => 'HTTPS', 'type' => 'Protokol'],
+                ['id' => 4, 'pairId' => 'p2', 'value' => 'Port 443', 'type' => 'Port'],
+                ['id' => 5, 'pairId' => 'p3', 'value' => 'SSH Remote', 'type' => 'Protokol'],
+                ['id' => 6, 'pairId' => 'p3', 'value' => 'Port 22', 'type' => 'Port'],
+                ['id' => 7, 'pairId' => 'p4', 'value' => 'DNS Query', 'type' => 'Protokol'],
+                ['id' => 8, 'pairId' => 'p4', 'value' => 'Port 53', 'type' => 'Port'],
+            ],
+        ]);
+
+        // =========================================================================
+        // 5. SMK: MAT-005 — REKAYASA PERANGKAT LUNAK (RPL)
+        // =========================================================================
+        $mat5 = Materi::create([
+            'kode' => 'MAT-005',
+            'jenjang' => 'SMK / Fase F',
+            'kelas' => 'Kelas 11 SMK',
+            'mapel' => 'Rekayasa Perangkat Lunak',
+            'topik' => 'Pemrograman Web Modern (React & RESTful API)',
+            'jumlah_submateri' => 3,
+            'author' => 'Direktorat SMK Kemendikbudristek & Asosiasi Industri Software',
+            'tanggal_terbit' => '26 Agt 2026',
+            'status' => 'Terdistribusi Nasional',
+            'badge' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            'deskripsi' => 'Pengembangan antarmuka single-page application (SPA), React hooks (useState, useEffect), konsumsi API endpoint JSON, dan arsitektur database relasional.',
+        ]);
+
+        $subMat5 = [
+            [
+                'nomor' => 1,
+                'judul' => 'Komponen React & Pengelolaan State',
+                'durasi' => '4 JP (180 Menit)',
+                'tujuan' => ['Membuat functional components, memanipulasi JSX, dan menggunakan hook useState.'],
+                'materi_utama' => "React adalah pustaka JavaScript deklaratif untuk membangun antarmuka pengguna berbasis komponen.\n\nKonsep Kunci:\n• Props: Data searah yang diteruskan dari komponen induk ke anak.\n• State: Data internal komponen yang dapat berubah dan memicu render ulang saat di-update.\n• JSX: Ekstensi sintaks JavaScript yang menyerupai HTML namun memiliki kapabilitas ekspresi kode JS penuh.",
+            ],
+            [
+                'nomor' => 2,
+                'judul' => 'Integrasi API dengan HTTP Client Fetch / Axios',
+                'durasi' => '4 JP (180 Menit)',
+                'tujuan' => ['Melakukan asynchronous request HTTP (GET, POST, PUT, DELETE) dengan Bearer Token autentikasi.'],
+                'materi_utama' => "Mekanisme REST API Client:\n• GET: Mengambil data koleksi atau entitas tunggal.\n• POST: Mengirim payload JSON untuk membuat rekaman baru.\n• PUT/PATCH: Memperbarui data yang ada.\n• DELETE: Menghapus data.\n• Authorization Header: Mengirim Bearer <token> untuk melindungi endpoint terlindungi.",
+            ],
+            [
+                'nomor' => 3,
+                'judul' => 'Clean Code & Penanganan Error UI',
+                'durasi' => '4 JP (180 Menit)',
+                'tujuan' => ['Mengimplementasikan loading skeleton, feedback toast, dan pencegahan error state null.'],
+                'materi_utama' => "Aplikasi web profesional wajib menangani kondisi loading, sukses, dan gagal secara visual.\nGunakan conditional rendering untuk menampilkan skeleton loader saat data sedang diambil, dan berikan feedback ramah saat koneksi gagal.",
+            ],
+        ];
+
+        foreach ($subMat5 as $sub) {
+            Submateri::create(array_merge($sub, ['materi_id' => $mat5->id]));
+        }
+
+        $quiz5 = Quiz::create([
+            'materi_id' => $mat5->id,
+            'kode' => 'QZ-RPL-01',
+            'judul' => 'Quiz Pemrograman Web Modern & API',
+            'topik' => 'RPL SMK Kelas XI - Web & Mobile Dev',
+            'durasi_menit' => 15,
+            'kkm' => 80,
+            'deskripsi' => 'Uji pemahaman seputar React hooks, asynchronous JavaScript, HTTP method, dan JSON API.',
+        ]);
+
+        $soals5 = [
+            ['nomor' => 1, 'pertanyaan' => 'Hook standar React yang digunakan untuk menangani side-effects seperti fetch API adalah...', 'opsi' => ['useState', 'useEffect', 'useMemo', 'useRef'], 'kunci' => 1, 'penjelasan' => 'useEffect dirancang untuk side effects seperti fetching data, manipulasi DOM, atau timer.'],
+            ['nomor' => 2, 'pertanyaan' => 'Metode HTTP yang tepat digunakan untuk memperbarui sebagian data spesifik adalah...', 'opsi' => ['GET', 'POST', 'PUT/PATCH', 'DELETE'], 'kunci' => 2, 'penjelasan' => 'PUT atau PATCH digunakan untuk update data resource.'],
+            ['nomor' => 3, 'pertanyaan' => 'Format pertukaran data standar yang paling sering digunakan pada komunikasi REST API modern adalah...', 'opsi' => ['XML', 'JSON', 'CSV', 'YAML'], 'kunci' => 1, 'penjelasan' => 'JSON (JavaScript Object Notation) adalah format ringan dan universal untuk REST API.'],
+        ];
+
+        foreach ($soals5 as $s) {
+            QuizSoal::create(array_merge($s, ['quiz_id' => $quiz5->id]));
+        }
+
+        // =========================================================================
+        // 6. SMA: MAT-006 — BIOLOGI KELAS 10 SMA
+        // =========================================================================
+        $mat6 = Materi::create([
+            'kode' => 'MAT-006',
+            'jenjang' => 'SMA / Fase E',
+            'kelas' => 'Kelas 10 SMA',
+            'mapel' => 'Biologi & Sains Terapan',
+            'topik' => 'Keanekaragaman Hayati & Ekosistem Tropis',
+            'jumlah_submateri' => 2,
+            'author' => 'Direktorat SMA Kemendikbudristek',
+            'tanggal_terbit' => '27 Agt 2026',
+            'status' => 'Terdistribusi Nasional',
+            'badge' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            'deskripsi' => 'Karakteristik keanekaragaman hayati gen, jenis, ekosistem di wilayah biogeografi Oriental, Australian, dan Peralihan (Wallacea).',
+        ]);
+
+        $subMat6 = [
+            [
+                'nomor' => 1,
+                'judul' => 'Tingkatan Biodiversitas & Garis Wallace-Weber',
+                'durasi' => '3 JP (135 Menit)',
+                'tujuan' => ['Membedakan variasi genetik, spesies, dan ekosistem serta peta persebaran fauna Indonesia.'],
+                'materi_utama' => "Indonesia memiliki kekayaan mega-biodiversitas yang dibagi oleh:\n• Garis Wallace: Membatasi tipe Asiatis (Gajah, Harimau, Badak) dengan tipe Peralihan.\n• Garis Weber: Membatasi tipe Peralihan (Komodo, Anoa, Babirusa) dengan tipe Australis (Cenderawasih, Kanguru Pohon).",
+            ],
+            [
+                'nomor' => 2,
+                'judul' => 'Konservasi In-Situ & Ex-Situ',
+                'durasi' => '3 JP (135 Menit)',
+                'tujuan' => ['Menganalisis pelestarian habitat asli versus penangkaran luar habitat.'],
+                'materi_utama' => "Metode Pelestarian Flora & Fauna:\n1. In-Situ: Dilakukan di habitat aslinya (Taman Nasional Ujung Kulon, Cagar Alam Komodo).\n2. Ex-Situ: Dilakukan di luar habitat aslinya untuk rehabilitasi (Kebun Raya Bogor, Taman Safari).",
+            ],
+        ];
+
+        foreach ($subMat6 as $sub) {
+            Submateri::create(array_merge($sub, ['materi_id' => $mat6->id]));
+        }
+
+        $quiz6 = Quiz::create([
+            'materi_id' => $mat6->id,
+            'kode' => 'QZ-BIO-01',
+            'judul' => 'Quiz Keanekaragaman Hayati Indonesia',
+            'topik' => 'Biologi SMA Kelas X - Bab 2 Ekosistem',
+            'durasi_menit' => 10,
+            'kkm' => 75,
+            'deskripsi' => 'Uji pemahaman zona persebaran flora fauna dan upaya konservasi lingkungan.',
+        ]);
+
+        $soals6 = [
+            ['nomor' => 1, 'pertanyaan' => 'Fauna khas zona peralihan di kawasan Wallacea Indonesia adalah...', 'opsi' => ['Harimau Sumatera', 'Komodo dan Anoa', 'Cenderawasih', 'Badak Bercula Satu'], 'kunci' => 1, 'penjelasan' => 'Komodo dan Anoa adalah satwa endemik pulau Sulawesi dan Nusa Tenggara pada zona peralihan.'],
+            ['nomor' => 2, 'pertanyaan' => 'Pelestarian spesies langka di habitat aslinya seperti Taman Nasional disebut konservasi...', 'opsi' => ['In-situ', 'Ex-situ', 'Reboisasi', 'Domestikasi'], 'kunci' => 0, 'penjelasan' => 'Konservasi in-situ dilakukan di habitat asli satwa/tumbuhan.'],
+        ];
+
+        foreach ($soals6 as $s) {
+            QuizSoal::create(array_merge($s, ['quiz_id' => $quiz6->id]));
+        }
     }
 }
+

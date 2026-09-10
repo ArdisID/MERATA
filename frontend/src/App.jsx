@@ -8,7 +8,8 @@ import {
   adaptVerifikasi,
   adaptTeacherNeed,
   adaptShipment,
-  adaptSchoolProfile
+  adaptSchoolProfile,
+  adaptMateri
 } from './services/adapters';
 
 // Authentication / Landing
@@ -37,24 +38,6 @@ import ProfilSekolahView from './components/admin/ProfilSekolahView';
 // Web Pemerintah Components
 import PemerintahView from './components/pemerintah/PemerintahView';
 
-// Initial Mock Datasets
-import {
-  initialSchoolProfile,
-  initialStudents,
-  initialTeachers,
-  initialClasses,
-  initialFacilities,
-  initialVerifications,
-  initialAssistanceShipments
-} from './data/mockAdminData';
-
-import {
-  mockTeacherProfile,
-  initialTeacherNeeds
-} from './data/mockGuruData';
-
-import { initialCurriculumMaterials } from './data/mockPemerintahData';
-
 export default function App() {
   // Global Route State: 'login' | 'guru' | 'admin' | 'pemerintah'
   const [currentRoute, setCurrentRoute] = useState('login');
@@ -70,19 +53,21 @@ export default function App() {
   // Global Search
   const [globalSearch, setGlobalSearch] = useState('');
 
-  // Persistent Shared State across all 3 portals
-  const [schoolProfile, setSchoolProfile] = useState(initialSchoolProfile);
-  const [students, setStudents] = useState(initialStudents);
-  const [teachers, setTeachers] = useState(initialTeachers);
-  const [classes, setClasses] = useState(initialClasses);
-  const [facilities, setFacilities] = useState(initialFacilities);
-  const [verifications, setVerifications] = useState(initialVerifications);
-  const [shipments, setShipments] = useState(initialAssistanceShipments);
-  const [materials, setMaterials] = useState(initialCurriculumMaterials);
+  // ── All state starts EMPTY — filled exclusively from the real API ──
+  const [schoolProfile, setSchoolProfile] = useState({});
+  const [students, setStudents] = useState([]);
+  const [teachers, setTeachers] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [facilities, setFacilities] = useState([]);
+  const [verifications, setVerifications] = useState([]);
+  const [shipments, setShipments] = useState([]);
+  const [materials, setMaterials] = useState([]);
 
-  // Teacher Profile & Needs
-  const [teacherProfile, setTeacherProfile] = useState(mockTeacherProfile);
-  const [teacherNeeds, setTeacherNeeds] = useState(initialTeacherNeeds);
+  // Teacher Profile & Needs — empty until API responds
+  const [teacherProfile, setTeacherProfile] = useState({
+    nama: '', nip: '', mapel: '', sekolah: '', poinKontribusi: 0, avatar: ''
+  });
+  const [teacherNeeds, setTeacherNeeds] = useState([]);
 
   // Verification modal handler in Admin
   const [selectedVerification, setSelectedVerification] = useState(null);
@@ -96,9 +81,11 @@ export default function App() {
     if (!role || role === 'login') return;
     try {
       if (role === 'guru') {
-        const [profilRes, monitoringRes] = await Promise.allSettled([
+        const [profilRes, monitoringRes, kelasRes, materiRes] = await Promise.allSettled([
           api.guru.getProfil(),
-          api.guru.getMonitoring()
+          api.guru.getMonitoring(),
+          api.guru.getKelas(),
+          api.guru.getMateri()
         ]);
         if (profilRes.status === 'fulfilled' && profilRes.value) {
           const { profil, kebutuhan } = profilRes.value;
@@ -111,23 +98,38 @@ export default function App() {
               sekolah: profil.sekolah?.nama || prev.sekolah,
               poinKontribusi: Number(profil.poin_kontribusi) || prev.poinKontribusi
             }));
+            if (profil.sekolah) {
+              setSchoolProfile(adaptSchoolProfile(profil.sekolah));
+            }
           }
           if (Array.isArray(kebutuhan) && kebutuhan.length > 0) {
             setTeacherNeeds(kebutuhan.map(adaptTeacherNeed));
           }
         }
-        if (monitoringRes.status === 'fulfilled' && Array.isArray(monitoringRes.value)) {
-          setStudents(monitoringRes.value.map(adaptSiswa));
+        if (monitoringRes.status === 'fulfilled' && monitoringRes.value) {
+          const monData = monitoringRes.value;
+          // Backend returns {stats, siswas} object
+          const siswasArr = Array.isArray(monData) ? monData : (monData?.siswas ?? monData?.data ?? []);
+          if (siswasArr.length > 0) {
+            setStudents(siswasArr.map(adaptSiswa));
+          }
+        }
+        if (kelasRes.status === 'fulfilled' && Array.isArray(kelasRes.value)) {
+          setClasses(kelasRes.value.map(adaptKelas));
+        }
+        if (materiRes.status === 'fulfilled' && Array.isArray(materiRes.value)) {
+          setMaterials(materiRes.value.map(adaptMateri));
         }
       } else if (role === 'admin') {
-        const [siswaRes, guruRes, kelasRes, fasilRes, verifRes, bantuanRes, profilRes] = await Promise.allSettled([
+        const [siswaRes, guruRes, kelasRes, fasilRes, verifRes, bantuanRes, profilRes, dashRes] = await Promise.allSettled([
           api.admin.getSiswa(),
           api.admin.getGuru(),
           api.admin.getKelas(),
           api.admin.getFasilitas(),
           api.admin.getVerifikasi(),
           api.admin.getBantuan(),
-          api.admin.getProfilSekolah()
+          api.admin.getProfilSekolah(),
+          api.admin.getDashboard()
         ]);
         if (siswaRes.status === 'fulfilled' && Array.isArray(siswaRes.value)) {
           setStudents(siswaRes.value.map(adaptSiswa));
@@ -147,8 +149,26 @@ export default function App() {
         if (bantuanRes.status === 'fulfilled' && Array.isArray(bantuanRes.value)) {
           setShipments(bantuanRes.value.map(adaptShipment));
         }
+        const dashData = dashRes.status === 'fulfilled' ? dashRes.value : null;
         if (profilRes.status === 'fulfilled' && profilRes.value) {
-          setSchoolProfile((prev) => adaptSchoolProfile(profilRes.value, prev));
+          const profileWithDash = {
+            ...profilRes.value,
+            ...(dashData ? {
+              total_siswa: dashData.total_siswa,
+              trend_siswa: dashData.trend_siswa,
+              total_guru: dashData.total_guru,
+              trend_guru: dashData.trend_guru,
+              total_kelas: dashData.total_kelas,
+              trend_kelas: dashData.trend_kelas,
+              tingkat_kehadiran: dashData.tingkat_kehadiran,
+              trend_kehadiran: dashData.trend_kehadiran,
+              lab_komputer: dashData.lab_komputer,
+              lab_ipa: dashData.lab_ipa
+            } : {})
+          };
+          setSchoolProfile((prev) => adaptSchoolProfile(profileWithDash, prev));
+        } else if (dashData) {
+          setSchoolProfile((prev) => adaptSchoolProfile(dashData, prev));
         }
       } else if (role === 'pemerintah') {
         const [siswaRes, kebutuhanRes] = await Promise.allSettled([
@@ -178,10 +198,19 @@ export default function App() {
             setCurrentUser(me);
             setCurrentRoute(me.role);
             loadPortalData(me.role);
+          } else {
+            api.auth.logout();
+            setCurrentUser(null);
+            setCurrentRoute('login');
           }
         } catch (e) {
           console.warn('Session check warning:', e.message);
+          api.auth.logout();
+          setCurrentUser(null);
+          setCurrentRoute('login');
         }
+      } else {
+        setCurrentRoute('login');
       }
     };
     verifySession();
@@ -222,7 +251,9 @@ export default function App() {
         judul: newVerifItem.judul,
         kategori: newVerifItem.kategori,
         estimasi_biaya: newVerifItem.estimasiBiaya,
-        justifikasi: newVerifItem.alasan || newVerifItem.justifikasi
+        justifikasi: newVerifItem.alasan || newVerifItem.justifikasi,
+        lampiran: newVerifItem.lampiran,
+        bukti_url: newVerifItem.lampiranUrl || null,
       });
       if (res?.verifikasi) {
         setVerifications((prev) => [
@@ -338,7 +369,27 @@ export default function App() {
     return (
       <LoginPage
         onLoginSuccess={(role, user) => {
-          if (user) setCurrentUser(user);
+          if (user) {
+            setCurrentUser(user);
+            if (user.sekolah) {
+              setSchoolProfile(adaptSchoolProfile(user.sekolah));
+            } else {
+              setSchoolProfile({});
+            }
+            if (user.guru) {
+              const g = user.guru;
+              const schName = g.sekolah?.nama || user.sekolah?.nama || '';
+              setTeacherProfile((prev) => ({
+                ...prev,
+                nama: g.nama || user.name || prev.nama,
+                nip: g.nip || prev.nip,
+                mapel: g.mapel || prev.mapel,
+                sekolah: schName || prev.sekolah,
+                poinKontribusi: Number(g.poin_kontribusi) || prev.poinKontribusi,
+                avatar: g.avatar || user.avatar || prev.avatar,
+              }));
+            }
+          }
           handleNavigateRoute(role);
         }}
       />
@@ -356,6 +407,8 @@ export default function App() {
             sidebarOpen={guruSidebarOpen}
             setSidebarOpen={setGuruSidebarOpen}
             pendingNeedsCount={teacherNeeds.filter((n) => n.status.includes('Menunggu')).length}
+            teacherProfile={teacherProfile}
+            currentUser={currentUser}
           />
 
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -385,6 +438,10 @@ export default function App() {
                   students={students}
                   setStudents={setStudents}
                   materials={materials}
+                  classes={classes}
+                  teacherProfile={teacherProfile}
+                  schoolProfile={schoolProfile}
+                  currentUser={currentUser}
                   globalSearch={globalSearch}
                   initialMode={guruActiveTab === 'game' ? 'game' : guruActiveTab === 'quiz' ? 'quiz' : 'materi'}
                 />
@@ -395,6 +452,7 @@ export default function App() {
                   students={students}
                   setStudents={setStudents}
                   globalSearch={globalSearch}
+                  teacherProfile={teacherProfile}
                 />
               )}
 
@@ -424,6 +482,8 @@ export default function App() {
             sidebarOpen={adminSidebarOpen}
             setSidebarOpen={setAdminSidebarOpen}
             pendingCount={pendingVerificationCount}
+            schoolProfile={schoolProfile}
+            currentUser={currentUser}
           />
 
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -434,6 +494,8 @@ export default function App() {
               notificationCount={pendingVerificationCount}
               setCurrentRoute={handleNavigateRoute}
               liveNotifications={adminLiveNotifications}
+              schoolProfile={schoolProfile}
+              currentUser={currentUser}
             />
 
             <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
@@ -445,6 +507,8 @@ export default function App() {
                   verifications={verifications}
                   setSelectedVerification={setSelectedVerification}
                   setIsVerifyModalOpen={setIsVerifyModalOpen}
+                  schoolProfile={schoolProfile}
+                  currentUser={currentUser}
                 />
               )}
 
@@ -455,9 +519,11 @@ export default function App() {
                   teachers={teachers}
                   setTeachers={setTeachers}
                   classes={classes}
+                  setClasses={setClasses}
                   facilities={facilities}
                   setFacilities={setFacilities}
                   globalSearch={globalSearch}
+                  schoolProfile={schoolProfile}
                 />
               )}
 

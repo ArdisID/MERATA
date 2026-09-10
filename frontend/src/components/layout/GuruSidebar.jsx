@@ -24,7 +24,9 @@ export default function GuruSidebar({
   setActiveTab,
   sidebarOpen,
   setSidebarOpen,
-  pendingNeedsCount = 0
+  pendingNeedsCount = 0,
+  teacherProfile = {},
+  currentUser = null
 }) {
   return (
     <>
@@ -112,11 +114,11 @@ export default function GuruSidebar({
         {/* Sidebar Footer */}
         <div className="p-4 m-4 rounded-2xl bg-gradient-to-br from-blue-50/80 to-indigo-50/50 border border-blue-100">
           <div className="flex items-center gap-2 text-blue-800 font-bold text-xs mb-1">
-            <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-            Kelas Aktif: 5A (Matematika)
+            <Sparkles className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+            <span className="truncate">{teacherProfile?.sekolah || currentUser?.sekolah?.nama || 'Portal Pendidik'}</span>
           </div>
-          <p className="text-[11px] text-slate-500 leading-relaxed">
-            Kurikulum Merdeka • Modul Pecahan
+          <p className="text-[11px] text-slate-500 leading-relaxed truncate">
+            {teacherProfile?.mapel || 'Kurikulum Merdeka'} • Pendidik Aktif
           </p>
         </div>
       </aside>

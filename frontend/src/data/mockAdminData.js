@@ -22,6 +22,7 @@ export const initialSchoolProfile = {
   email: 'info@smpn1merata.sch.id',
   website: 'https://smpn1merata.sch.id',
   kurikulum: 'Kurikulum Merdeka Mandiri Berbagi',
+  foto: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=1200&auto=format&fit=crop',
   stats: {
     totalSiswa: 1248,
     trendSiswa: '+1% dari bulan lalu',
@@ -37,9 +38,257 @@ export const initialSchoolProfile = {
 };
 
 export const initialStudents = [
+  // ===== KELAS 7A =====
   {
     id: 'SIS-001',
     nisn: '0089123411',
+    nama: 'Aditya Pratama Putra',
+    gender: 'Laki-laki',
+    kelas: '7A',
+    kehadiran: 98,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 94.0,
+    statusBantuan: 'Beasiswa Prestasi',
+    bantuanBadge: 'bg-blue-50 text-blue-700 border-blue-200',
+    kebutuhan: 'Buku Olimpiade Sains',
+    catatan: 'Juara 1 OSN Matematika Tingkat Kota.',
+    riwayatBantuan: [
+      { tahun: '2026', jenis: 'Beasiswa Bakti Pendidikan', nilai: 'Rp 1.200.000', status: 'Tersalurkan' }
+    ]
+  },
+  {
+    id: 'SIS-002',
+    nisn: '0089123412',
+    nama: 'Rizky Aulia Ramadhan',
+    gender: 'Laki-laki',
+    kelas: '7A',
+    kehadiran: 95,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 86.5,
+    statusBantuan: 'Penerima KIP',
+    bantuanBadge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    kebutuhan: 'Tas sekolah & Alat tulis',
+    catatan: 'Aktif mengikuti kegiatan ekstrakurikuler robotik.',
+    riwayatBantuan: [
+      { tahun: '2026', jenis: 'KIP Fase D', nilai: 'Rp 750.000', status: 'Tersalurkan' }
+    ]
+  },
+  {
+    id: 'SIS-003',
+    nisn: '0089123413',
+    nama: 'Nadia Putri Rahayu',
+    gender: 'Perempuan',
+    kelas: '7A',
+    kehadiran: 100,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 97.2,
+    statusBantuan: 'Beasiswa Prestasi',
+    bantuanBadge: 'bg-blue-50 text-blue-700 border-blue-200',
+    kebutuhan: '-',
+    catatan: 'Peringkat 1 semester ganjil. Wakil OSN Fisika.',
+    riwayatBantuan: []
+  },
+  {
+    id: 'SIS-004',
+    nisn: '0089123414',
+    nama: 'Farhan Hidayatullah',
+    gender: 'Laki-laki',
+    kelas: '7A',
+    kehadiran: 82,
+    statusKehadiran: 'Perhatian Khusus',
+    nilaiRataRata: 71.0,
+    statusBantuan: 'Usulan KIP (Menunggu)',
+    bantuanBadge: 'bg-amber-50 text-amber-700 border-amber-200',
+    kebutuhan: 'Seragam sekolah & biaya SPP',
+    catatan: 'Sering izin karena membantu orang tua berdagang.',
+    riwayatBantuan: []
+  },
+  {
+    id: 'SIS-005',
+    nisn: '0089123415',
+    nama: 'Dewi Kartika Sari',
+    gender: 'Perempuan',
+    kelas: '7A',
+    kehadiran: 93,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 82.3,
+    statusBantuan: 'Penerima KJP Plus',
+    bantuanBadge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    kebutuhan: '-',
+    catatan: 'Aktif di kegiatan Pramuka dan Paduan Suara.',
+    riwayatBantuan: [
+      { tahun: '2025', jenis: 'KJP Plus', nilai: 'Rp 300.000 / bln', status: 'Tersalurkan' }
+    ]
+  },
+  {
+    id: 'SIS-006',
+    nisn: '0089123416',
+    nama: 'Muhammad Ilham Saputra',
+    gender: 'Laki-laki',
+    kelas: '7A',
+    kehadiran: 88,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 78.8,
+    statusBantuan: 'Belum Ada',
+    bantuanBadge: 'bg-gray-100 text-gray-700 border-gray-200',
+    kebutuhan: 'Kamus Bahasa Inggris',
+    catatan: 'Perlu bimbingan tambahan di pelajaran Bahasa Inggris.',
+    riwayatBantuan: []
+  },
+  {
+    id: 'SIS-007',
+    nisn: '0089123417',
+    nama: 'Salma Azzahra Rahmadani',
+    gender: 'Perempuan',
+    kelas: '7A',
+    kehadiran: 97,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 90.1,
+    statusBantuan: 'Penerima KIP',
+    bantuanBadge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    kebutuhan: 'Buku paket Matematika',
+    catatan: 'Sangat aktif di kelas dan sering membantu teman.',
+    riwayatBantuan: [
+      { tahun: '2026', jenis: 'KIP Fase D', nilai: 'Rp 750.000', status: 'Tersalurkan' }
+    ]
+  },
+  {
+    id: 'SIS-008',
+    nisn: '0089123418',
+    nama: 'Bintang Cahaya Nugroho',
+    gender: 'Laki-laki',
+    kelas: '7A',
+    kehadiran: 76,
+    statusKehadiran: 'Perhatian Khusus',
+    nilaiRataRata: 62.5,
+    statusBantuan: 'Penerima KIP',
+    bantuanBadge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    kebutuhan: 'Sepatu & seragam olahraga',
+    catatan: 'Tercatat 3 kali alpa dalam sebulan. Perlu kunjungan rumah.',
+    riwayatBantuan: [
+      { tahun: '2025', jenis: 'KIP Fase D', nilai: 'Rp 750.000', status: 'Tersalurkan' }
+    ]
+  },
+
+  // ===== KELAS 8A =====
+  {
+    id: 'SIS-009',
+    nisn: '0089123419',
+    nama: 'Aisyah Putri Azzahra',
+    gender: 'Perempuan',
+    kelas: '8A',
+    kehadiran: 96,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 88.5,
+    statusBantuan: 'Penerima KJP Plus',
+    bantuanBadge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    kebutuhan: 'Kacamata minus untuk membaca papan tulis',
+    catatan: 'Aktif dalam kegiatan OSIS dan Pramuka.',
+    riwayatBantuan: [
+      { tahun: '2025', jenis: 'KJP Plus', nilai: 'Rp 300.000 / bln', status: 'Tersalurkan' }
+    ]
+  },
+  {
+    id: 'SIS-010',
+    nisn: '0089123420',
+    nama: 'Daffa Arya Pratama',
+    gender: 'Laki-laki',
+    kelas: '8A',
+    kehadiran: 90,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 83.0,
+    statusBantuan: 'Belum Ada',
+    bantuanBadge: 'bg-gray-100 text-gray-700 border-gray-200',
+    kebutuhan: '-',
+    catatan: 'Aktif di klub basket sekolah.',
+    riwayatBantuan: []
+  },
+  {
+    id: 'SIS-011',
+    nisn: '0089123421',
+    nama: 'Putri Maulida Hasanah',
+    gender: 'Perempuan',
+    kelas: '8A',
+    kehadiran: 99,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 95.3,
+    statusBantuan: 'Beasiswa Prestasi',
+    bantuanBadge: 'bg-blue-50 text-blue-700 border-blue-200',
+    kebutuhan: '-',
+    catatan: 'Peringkat 1 di kelas 8A. Kandidat OSN IPA.',
+    riwayatBantuan: [
+      { tahun: '2026', jenis: 'Beasiswa Bakti Pendidikan', nilai: 'Rp 1.500.000', status: 'Tersalurkan' }
+    ]
+  },
+  {
+    id: 'SIS-012',
+    nisn: '0089123422',
+    nama: 'Kevin Andrianto Susilo',
+    gender: 'Laki-laki',
+    kelas: '8A',
+    kehadiran: 85,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 76.2,
+    statusBantuan: 'Usulan KIP (Menunggu)',
+    bantuanBadge: 'bg-amber-50 text-amber-700 border-amber-200',
+    kebutuhan: 'Laptop / tablet untuk belajar daring',
+    catatan: 'Tidak memiliki perangkat belajar pribadi di rumah.',
+    riwayatBantuan: []
+  },
+  {
+    id: 'SIS-013',
+    nisn: '0089123423',
+    nama: 'Anisa Nur Fadhilah',
+    gender: 'Perempuan',
+    kelas: '8A',
+    kehadiran: 94,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 80.7,
+    statusBantuan: 'Penerima KIP',
+    bantuanBadge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    kebutuhan: 'Seragam batik sekolah',
+    catatan: 'Aktif di kegiatan seni dan kerajinan tangan.',
+    riwayatBantuan: [
+      { tahun: '2026', jenis: 'KIP Fase D', nilai: 'Rp 750.000', status: 'Tersalurkan' }
+    ]
+  },
+  {
+    id: 'SIS-014',
+    nisn: '0089123424',
+    nama: 'Rendra Mahardika Putra',
+    gender: 'Laki-laki',
+    kelas: '8A',
+    kehadiran: 78,
+    statusKehadiran: 'Perhatian Khusus',
+    nilaiRataRata: 65.0,
+    statusBantuan: 'Penerima KIP',
+    bantuanBadge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    kebutuhan: 'Biaya les tambahan Matematika',
+    catatan: 'Kesulitan di materi aljabar, butuh bimbingan intensif.',
+    riwayatBantuan: [
+      { tahun: '2025', jenis: 'KIP Fase D', nilai: 'Rp 750.000', status: 'Tersalurkan' }
+    ]
+  },
+  {
+    id: 'SIS-015',
+    nisn: '0089123425',
+    nama: 'Zara Amelia Putri',
+    gender: 'Perempuan',
+    kelas: '8A',
+    kehadiran: 100,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 91.8,
+    statusBantuan: 'Belum Ada',
+    bantuanBadge: 'bg-gray-100 text-gray-700 border-gray-200',
+    kebutuhan: '-',
+    catatan: 'Selalu hadir. Ketua kelas 8A semester ini.',
+    riwayatBantuan: []
+  },
+
+  // ===== KELAS 8B =====
+  {
+    id: 'SIS-016',
+    nisn: '0089123426',
     nama: 'Rian Pratama',
     gender: 'Laki-laki',
     kelas: '8B',
@@ -56,8 +305,91 @@ export const initialStudents = [
     ]
   },
   {
-    id: 'SIS-002',
-    nisn: '0089123412',
+    id: 'SIS-017',
+    nisn: '0089123427',
+    nama: 'Layla Mutiara Dewi',
+    gender: 'Perempuan',
+    kelas: '8B',
+    kehadiran: 89,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 79.5,
+    statusBantuan: 'Usulan KIP (Menunggu)',
+    bantuanBadge: 'bg-amber-50 text-amber-700 border-amber-200',
+    kebutuhan: 'Biaya transportasi sekolah',
+    catatan: 'Jarak rumah ke sekolah cukup jauh, butuh subsidi transport.',
+    riwayatBantuan: []
+  },
+  {
+    id: 'SIS-018',
+    nisn: '0089123428',
+    nama: 'Arya Bagas Wicaksono',
+    gender: 'Laki-laki',
+    kelas: '8B',
+    kehadiran: 91,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 74.2,
+    statusBantuan: 'Belum Ada',
+    bantuanBadge: 'bg-gray-100 text-gray-700 border-gray-200',
+    kebutuhan: '-',
+    catatan: 'Aktif di kegiatan paskibra sekolah.',
+    riwayatBantuan: []
+  },
+  {
+    id: 'SIS-019',
+    nisn: '0089123429',
+    nama: 'Shafira Nur Indah',
+    gender: 'Perempuan',
+    kelas: '8B',
+    kehadiran: 97,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 85.6,
+    statusBantuan: 'Penerima KIP',
+    bantuanBadge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    kebutuhan: 'Buku-buku paket IPA & IPS',
+    catatan: 'Rajin dan aktif berdiskusi di kelas.',
+    riwayatBantuan: [
+      { tahun: '2026', jenis: 'KIP Fase D', nilai: 'Rp 750.000', status: 'Tersalurkan' }
+    ]
+  },
+  {
+    id: 'SIS-020',
+    nisn: '0089123430',
+    nama: 'Fauzan Hakim Santoso',
+    gender: 'Laki-laki',
+    kelas: '8B',
+    kehadiran: 65,
+    statusKehadiran: 'Perhatian Khusus',
+    nilaiRataRata: 58.0,
+    statusBantuan: 'Penerima KIP',
+    bantuanBadge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    kebutuhan: 'Pendampingan psikologis & bimbingan belajar',
+    catatan: 'Terindikasi kesulitan belajar. Perlu evaluasi khusus dari BK.',
+    riwayatBantuan: [
+      { tahun: '2025', jenis: 'KIP Fase D', nilai: 'Rp 750.000', status: 'Tersalurkan' }
+    ]
+  },
+  {
+    id: 'SIS-021',
+    nisn: '0089123431',
+    nama: 'Nayla Kharisma Utami',
+    gender: 'Perempuan',
+    kelas: '8B',
+    kehadiran: 94,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 82.1,
+    statusBantuan: 'Penerima KJP Plus',
+    bantuanBadge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    kebutuhan: '-',
+    catatan: 'Aktif sebagai bendahara OSIS.',
+    riwayatBantuan: [
+      { tahun: '2025', jenis: 'KJP Plus', nilai: 'Rp 300.000 / bln', status: 'Tersalurkan' }
+    ]
+  },
+
+  // ===== KELAS 9A =====
+  {
+    id: 'SIS-022',
+    nisn: '0089123432',
     nama: 'Siti Nurhaliza',
     gender: 'Perempuan',
     kelas: '9A',
@@ -71,42 +403,94 @@ export const initialStudents = [
     riwayatBantuan: []
   },
   {
-    id: 'SIS-003',
-    nisn: '0089123413',
-    nama: 'Aditya Pratama Putra',
+    id: 'SIS-023',
+    nisn: '0089123433',
+    nama: 'Ahmad Zulfikar Ramadhan',
     gender: 'Laki-laki',
-    kelas: '7A',
-    kehadiran: 98,
+    kelas: '9A',
+    kehadiran: 96,
     statusKehadiran: 'Baik',
-    nilaiRataRata: 94.0,
+    nilaiRataRata: 91.5,
     statusBantuan: 'Beasiswa Prestasi',
     bantuanBadge: 'bg-blue-50 text-blue-700 border-blue-200',
-    kebutuhan: 'Buku Olimpiade Sains',
-    catatan: 'Juara 1 OSN Matematika Tingkat Kota.',
+    kebutuhan: 'Buku persiapan UN',
+    catatan: 'Ketua OSIS. Berprestasi di kompetisi debat Bahasa Indonesia.',
     riwayatBantuan: [
-      { tahun: '2026', jenis: 'Beasiswa Bakti Pendidikan', nilai: 'Rp 1.200.000', status: 'Tersalurkan' }
+      { tahun: '2026', jenis: 'Beasiswa Bakti Pendidikan', nilai: 'Rp 1.500.000', status: 'Tersalurkan' }
     ]
   },
   {
-    id: 'SIS-004',
-    nisn: '0089123414',
-    nama: 'Aisyah Putri Azzahra',
+    id: 'SIS-024',
+    nisn: '0089123434',
+    nama: 'Maharani Sekar Ayu',
     gender: 'Perempuan',
-    kelas: '8A',
-    kehadiran: 96,
+    kelas: '9A',
+    kehadiran: 100,
     statusKehadiran: 'Baik',
-    nilaiRataRata: 88.5,
+    nilaiRataRata: 96.8,
+    statusBantuan: 'Beasiswa Prestasi',
+    bantuanBadge: 'bg-blue-50 text-blue-700 border-blue-200',
+    kebutuhan: '-',
+    catatan: 'Peringkat 1 se-angkatan 9. Calon valedictorian.',
+    riwayatBantuan: [
+      { tahun: '2025', jenis: 'Beasiswa Bakti Pendidikan', nilai: 'Rp 1.200.000', status: 'Tersalurkan' },
+      { tahun: '2026', jenis: 'Beasiswa Bakti Pendidikan', nilai: 'Rp 1.500.000', status: 'Tersalurkan' }
+    ]
+  },
+  {
+    id: 'SIS-025',
+    nisn: '0089123435',
+    nama: 'Dimas Eka Prasetyo',
+    gender: 'Laki-laki',
+    kelas: '9A',
+    kehadiran: 84,
+    statusKehadiran: 'Perhatian Khusus',
+    nilaiRataRata: 70.3,
+    statusBantuan: 'Penerima KIP',
+    bantuanBadge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    kebutuhan: 'Bimbingan belajar intensif UN',
+    catatan: 'Nilai IPA & Matematika perlu ditingkatkan menjelang UN.',
+    riwayatBantuan: [
+      { tahun: '2025', jenis: 'KIP Fase D', nilai: 'Rp 750.000', status: 'Tersalurkan' }
+    ]
+  },
+  {
+    id: 'SIS-026',
+    nisn: '0089123436',
+    nama: 'Intan Permata Sari',
+    gender: 'Perempuan',
+    kelas: '9A',
+    kehadiran: 92,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 84.0,
     statusBantuan: 'Penerima KJP Plus',
     bantuanBadge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    kebutuhan: 'Kacamata minus untuk membaca papan tulis',
-    catatan: 'Aktif dalam kegiatan OSIS dan Pramuka.',
+    kebutuhan: '-',
+    catatan: 'Aktif di ekskul PMR dan jurnalistik sekolah.',
     riwayatBantuan: [
       { tahun: '2025', jenis: 'KJP Plus', nilai: 'Rp 300.000 / bln', status: 'Tersalurkan' }
     ]
   },
   {
-    id: 'SIS-005',
-    nisn: '0089123415',
+    id: 'SIS-027',
+    nisn: '0089123437',
+    nama: 'Wahyu Tri Nugroho',
+    gender: 'Laki-laki',
+    kelas: '9A',
+    kehadiran: 98,
+    statusKehadiran: 'Baik',
+    nilaiRataRata: 88.7,
+    statusBantuan: 'Belum Ada',
+    bantuanBadge: 'bg-gray-100 text-gray-700 border-gray-200',
+    kebutuhan: '-',
+    catatan: 'Siswa teladan. Aktif membantu persiapan kegiatan wisuda sekolah.',
+    riwayatBantuan: []
+  },
+
+  // ===== KELAS LAINNYA (untuk Admin view) =====
+  {
+    id: 'SIS-028',
+    nisn: '0089123438',
     nama: 'Bagus Setiawan',
     gender: 'Laki-laki',
     kelas: '9B',
@@ -120,8 +504,8 @@ export const initialStudents = [
     riwayatBantuan: []
   },
   {
-    id: 'SIS-006',
-    nisn: '0089123416',
+    id: 'SIS-029',
+    nisn: '0089123439',
     nama: 'Clarissa Maharani',
     gender: 'Perempuan',
     kelas: '7B',
@@ -357,7 +741,8 @@ export const initialVerifications = [
     status: 'menunggu', // 'menunggu' | 'disetujui_sekolah' | 'diteruskan_pemda' | 'disetujui_pemda' | 'ditolak' | 'perlu_revisi'
     statusLabel: 'Menunggu Verifikasi',
     catatanAdmin: '',
-    lampiran: 'Proposal_ANBK_2026.pdf (1.2 MB)'
+    lampiran: 'Proposal_ANBK_2026.pdf (1.2 MB)',
+    buktiUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=800&auto=format&fit=crop'
   },
   {
     id: 'VRF-002',
@@ -374,7 +759,8 @@ export const initialVerifications = [
     status: 'disetujui_sekolah',
     statusLabel: 'Disetujui Sekolah',
     catatanAdmin: 'Disetujui oleh Kepala Sekolah. Diteruskan ke anggaran BOS Reguler.',
-    lampiran: 'Rincian_Teknis_Server.pdf (450 KB)'
+    lampiran: 'Rincian_Teknis_Server.pdf (450 KB)',
+    buktiUrl: null
   },
   {
     id: 'VRF-003',
@@ -391,7 +777,8 @@ export const initialVerifications = [
     status: 'diteruskan_pemda',
     statusLabel: 'Diteruskan ke Pemerintah',
     catatanAdmin: 'Diteruskan ke Dinas Pendidikan DKI Jakarta melalui program DAK Fisik.',
-    lampiran: 'Foto_Kerusakan_Plafon.pdf (3.8 MB)'
+    lampiran: 'Foto_Kerusakan_Plafon.jpg (3.8 MB)',
+    buktiUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=800&auto=format&fit=crop'
   },
   {
     id: 'VRF-004',

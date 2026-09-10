@@ -22,7 +22,9 @@ export default function AdminSidebar({
   setActiveTab,
   sidebarOpen,
   setSidebarOpen,
-  pendingCount = 0
+  pendingCount = 0,
+  schoolProfile = {},
+  currentUser = null
 }) {
   return (
     <>
@@ -110,11 +112,11 @@ export default function AdminSidebar({
         {/* Sidebar Footer Info Card */}
         <div className="p-4 m-4 rounded-2xl bg-gradient-to-br from-blue-50/80 to-indigo-50/50 border border-blue-100">
           <div className="flex items-center gap-2 text-blue-800 font-bold text-xs mb-1">
-            <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-            SMP Negeri 1 Merata
+            <Sparkles className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+            <span className="truncate">{schoolProfile?.nama || currentUser?.sekolah?.nama || 'Admin Sekolah'}</span>
           </div>
-          <p className="text-[11px] text-gray-500 leading-relaxed">
-            NPSN: 20108942 • Akreditasi A (Unggul)
+          <p className="text-[11px] text-gray-500 leading-relaxed truncate">
+            NPSN: {schoolProfile?.npsn || currentUser?.sekolah?.npsn || '-'} • Akreditasi {schoolProfile?.akreditasi || currentUser?.sekolah?.akreditasi || '-'}
           </p>
         </div>
       </aside>

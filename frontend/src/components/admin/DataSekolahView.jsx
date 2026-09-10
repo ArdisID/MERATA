@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Users,
   GraduationCap,
@@ -17,7 +17,8 @@ import {
   Edit2,
   Trash2,
   AlertCircle,
-  Wrench
+  Wrench,
+  ShieldCheck
 } from 'lucide-react';
 import { exportToCSV, printFormattedReport } from '../../utils/exportUtils';
 import api from '../../services/api';
@@ -27,10 +28,12 @@ export default function DataSekolahView({
   setStudents,
   teachers,
   setTeachers,
-  classes,
+  classes = [],
+  setClasses,
   facilities,
   setFacilities,
-  globalSearch = ''
+  globalSearch = '',
+  schoolProfile = {}
 }) {
   const [activeSubTab, setActiveSubTab] = useState('siswa'); // 'siswa' | 'guru' | 'kelas' | 'fasilitas'
   const [filterKelas, setFilterKelas] = useState('all');
@@ -39,6 +42,7 @@ export default function DataSekolahView({
   const [filterMapel, setFilterMapel] = useState('all');
 
   // Modals & Action States
+  const [editingStudent, setEditingStudent] = useState(null);
   const [editingTeacher, setEditingTeacher] = useState(null);
   const [deletingTeacher, setDeletingTeacher] = useState(null);
   const [deletingStudent, setDeletingStudent] = useState(null);
@@ -58,6 +62,82 @@ export default function DataSekolahView({
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
   const [isAddFacilityModalOpen, setIsAddFacilityModalOpen] = useState(false);
+
+  // Add Class Modal State
+  const [isAddClassModalOpen, setIsAddClassModalOpen] = useState(false);
+  const [newClass, setNewClass] = useState({
+    nama: '',
+    tingkat: '10',
+    ruang: '',
+    waliKelasId: '',
+    waliKelasNama: '',
+  });
+
+  // Dynamic available classes derived strictly from this school's classes or school profile
+  const schName = (schoolProfile?.nama || '').toUpperCase();
+  const schJenjang = (schoolProfile?.jenjang || '').toUpperCase();
+
+  const defaultFallbackClasses = useMemo(() => {
+    if (schName.includes('SMK') || schJenjang.includes('SMK')) {
+      return ['X TKJ 1', 'X RPL 1', 'XI TKJ 1', 'XI RPL 1', 'XII TKJ 1', 'XII RPL 1'];
+    }
+    if (schName.includes('SMA') || schJenjang.includes('SMA')) {
+      return ['X IPA 1', 'X IPS 1', 'XI MIPA 1', 'XII MIPA 1'];
+    }
+    if (schName.includes('SD') || schJenjang.includes('SD')) {
+      return ['1A', '2A', '3A', '4A', '5A', '6A'];
+    }
+    return ['7A', '7B', '8A', '8B', '9A', '9B'];
+  }, [schName, schJenjang]);
+
+  const availableClassNames = useMemo(() => {
+    if (classes && classes.length > 0) {
+      return classes.map((c) => c.nama).filter(Boolean);
+    }
+    return defaultFallbackClasses;
+  }, [classes, defaultFallbackClasses]);
+
+  const handleCreateClass = async (e) => {
+    e.preventDefault();
+    if (!newClass.nama.trim()) return;
+
+    try {
+      const res = await api.admin.createKelas({
+        nama: newClass.nama.trim(),
+        tingkat: newClass.tingkat,
+        ruang: newClass.ruang || `Ruang ${newClass.nama}`,
+        wali_kelas_nama: newClass.waliKelasNama || '-',
+        wali_kelas_id: newClass.waliKelasId ? Number(newClass.waliKelasId) : null,
+      });
+
+      const created = res?.kelas || {};
+      const newClassItem = {
+        id: created.id || Date.now(),
+        kode: created.kode || `KLS-${newClass.nama}`,
+        nama: created.nama || newClass.nama,
+        tingkat: created.tingkat || newClass.tingkat,
+        ruang: created.ruang || newClass.ruang || `Ruang ${newClass.nama}`,
+        waliKelas: created.wali_kelas_nama || newClass.waliKelasNama || '-',
+        totalSiswa: 0,
+        lakiLaki: 0,
+        perempuan: 0,
+        kehadiranRata: '100%',
+        status: 'Aktif',
+        jadwals: []
+      };
+
+      if (setClasses) {
+        setClasses((prev) => [...prev, newClassItem]);
+      }
+      setIsAddClassModalOpen(false);
+      setNewClass({ nama: '', tingkat: '10', ruang: '', waliKelasId: '', waliKelasNama: '' });
+      showActionToast(`Rombel kelas ${newClass.nama} berhasil ditambahkan!`);
+    } catch (err) {
+      console.warn('Create class error:', err);
+      showActionToast(err.message || 'Gagal menambahkan kelas.');
+    }
+  };
+
   const [newTeacher, setNewTeacher] = useState({
     nip: '',
     nama: '',
@@ -71,6 +151,7 @@ export default function DataSekolahView({
     lamaMengajar: '3 Tahun',
     telepon: '',
     email: '',
+    password: '',
     kebutuhan: '',
   });
   const [uploadedFacilityPhoto, setUploadedFacilityPhoto] = useState(null);
@@ -97,7 +178,7 @@ export default function DataSekolahView({
     nisn: '',
     nama: '',
     gender: 'Laki-laki',
-    kelas: '7A',
+    kelas: '',
     statusBantuan: 'Belum Ada',
     kebutuhan: '',
     catatan: '',
@@ -219,9 +300,12 @@ export default function DataSekolahView({
     e.preventDefault();
     if (!newStudent.nama || !newStudent.nisn) return;
 
+    const chosenClass = newStudent.kelas || availableClassNames[0] || '-';
+
     const created = {
       id: `SIS-${String(students.length + 1).padStart(3, '0')}`,
       ...newStudent,
+      kelas: chosenClass,
       kehadiran: 100,
       statusKehadiran: 'Baik',
       nilaiRataRata: 80.0,
@@ -234,11 +318,12 @@ export default function DataSekolahView({
 
     setStudents([created, ...students]);
     setIsAddStudentModalOpen(false);
+    showActionToast(`Data siswa ${newStudent.nama} kelas ${chosenClass} berhasil ditambahkan!`);
     setNewStudent({
       nisn: '',
       nama: '',
       gender: 'Laki-laki',
-      kelas: '7A',
+      kelas: availableClassNames[0] || '',
       statusBantuan: 'Belum Ada',
       kebutuhan: '',
       catatan: '',
@@ -257,6 +342,42 @@ export default function DataSekolahView({
       }).catch(err => console.warn('Sync student creation warning:', err));
     } catch (e) {
       console.warn('Sync student creation error:', e);
+    }
+  };
+ 
+  // Handle Update Student (including KJP / bantuan status)
+  const handleUpdateStudent = (e) => {
+    e.preventDefault();
+    if (!editingStudent) return;
+    const updated = { ...editingStudent };
+    let badge = 'bg-gray-50 text-gray-700 border-gray-200';
+    if (updated.statusBantuan?.includes('KIP') || updated.statusBantuan?.includes('KJP')) {
+      badge = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    } else if (updated.statusBantuan?.includes('Beasiswa')) {
+      badge = 'bg-blue-50 text-blue-700 border-blue-200';
+    }
+
+    const nextStudents = students.map((s) =>
+      s.id === updated.id ? { ...updated, bantuanBadge: badge } : s
+    );
+    setStudents(nextStudents);
+    setEditingStudent(null);
+    showActionToast(`Data murid "${updated.nama}" (Status: ${updated.statusBantuan}) berhasil diperbarui!`);
+
+    // Sync to backend API
+    try {
+      const dbId = updated.dbId || parseInt(String(updated.id).replace('SIS-', ''), 10) || 1;
+      api.admin.updateSiswa(dbId, {
+        nama: updated.nama,
+        kelas_nama: updated.kelas,
+        status_bantuan: updated.statusBantuan,
+        bantuan_badge: badge,
+        kebutuhan: updated.kebutuhan,
+        kehadiran: Number(updated.kehadiran) || 95,
+        nilai_rata_rata: Number(updated.nilaiRataRata) || 80,
+      }).catch((err) => console.warn('Sync update student warning:', err));
+    } catch (err) {
+      console.warn('Sync update student error:', err);
     }
   };
 
@@ -290,6 +411,7 @@ export default function DataSekolahView({
       lamaMengajar: '3 Tahun',
       telepon: '',
       email: '',
+      password: '',
       kebutuhan: '',
     });
 
@@ -308,6 +430,7 @@ export default function DataSekolahView({
         lama_mengajar: newTeacher.lamaMengajar,
         telepon: newTeacher.telepon,
         email: newTeacher.email,
+        password: newTeacher.password || 'password',
         kebutuhan: newTeacher.kebutuhan,
       }).catch((err) => console.warn('Sync teacher creation warning:', err));
     } catch (e) {
@@ -493,8 +616,14 @@ export default function DataSekolahView({
               </button>
               <button
                 type="button"
-                onClick={() => setIsAddStudentModalOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm shadow-blue-500/20 transition-all"
+                onClick={() => {
+                  setNewStudent((prev) => ({
+                    ...prev,
+                    kelas: prev.kelas || availableClassNames[0] || ''
+                  }));
+                  setIsAddStudentModalOpen(true);
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm shadow-blue-500/20 transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Tambah Data Siswa</span>
@@ -523,11 +652,22 @@ export default function DataSekolahView({
             </>
           )}
 
+          {activeSubTab === 'kelas' && (
+            <button
+              type="button"
+              onClick={() => setIsAddClassModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm shadow-blue-500/20 transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Tambah Rombel Kelas</span>
+            </button>
+          )}
+
           {activeSubTab === 'fasilitas' && (
             <button
               type="button"
               onClick={() => setIsAddFacilityModalOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm shadow-blue-500/20 transition-all"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm shadow-blue-500/20 transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Tambah / Usulkan Fasilitas</span>
@@ -600,12 +740,14 @@ export default function DataSekolahView({
               <select
                 value={filterKelas}
                 onChange={(e) => setFilterKelas(e.target.value)}
-                className="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
               >
-                <option value="all">Semua Tingkat</option>
-                <option value="7">Kelas 7</option>
-                <option value="8">Kelas 8</option>
-                <option value="9">Kelas 9</option>
+                <option value="all">Semua Kelas</option>
+                {availableClassNames.map((k) => (
+                  <option key={k} value={k}>
+                    Kelas {k}
+                  </option>
+                ))}
               </select>
 
               <select
@@ -692,6 +834,15 @@ export default function DataSekolahView({
 
                     <td className="py-3.5 px-3 text-right">
                       <div className="inline-flex items-center gap-1.5 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setEditingStudent({ ...siswa })}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100 hover:border-emerald-300 font-bold text-[11px] text-emerald-700 transition-colors cursor-pointer"
+                          title="Update Status Bantuan (KJP) & Data Murid"
+                        >
+                          <Edit2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Edit</span>
+                        </button>
                         <button
                           type="button"
                           onClick={() => setSelectedStudent(siswa)}
@@ -994,6 +1145,131 @@ export default function DataSekolahView({
 
       {/* ================= MODALS ================= */}
 
+      {/* 0. EDIT SISWA MODAL (UPDATE KJP & DATA SISWA) */}
+      {editingStudent && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-emerald-600 to-teal-700 text-white">
+              <div>
+                <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                  <Edit2 className="w-4 h-4" />
+                  <span>Update Data Murid & Status KJP</span>
+                </h3>
+                <p className="text-xs text-emerald-100 mt-0.5">NISN: {editingStudent.nisn} • {editingStudent.gender}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingStudent(null)}
+                className="p-1.5 text-emerald-100 hover:text-white rounded-lg hover:bg-white/20 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateStudent} className="p-6 space-y-4 overflow-y-auto text-xs">
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Nama Lengkap Siswa *</label>
+                <input
+                  type="text"
+                  required
+                  value={editingStudent.nama}
+                  onChange={(e) => setEditingStudent({ ...editingStudent, nama: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Kelas / Rombel</label>
+                  <select
+                    value={editingStudent.kelas}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, kelas: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none cursor-pointer"
+                  >
+                    {availableClassNames.map((k) => (
+                      <option key={k} value={k}>
+                        Kelas {k}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">
+                    Status Bantuan (KJP / KIP) *
+                  </label>
+                  <select
+                    value={editingStudent.statusBantuan}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, statusBantuan: e.target.value })}
+                    className="w-full px-3 py-2 bg-emerald-50/70 border border-emerald-300 font-bold text-emerald-900 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
+                  >
+                    <option value="Penerima KIP / KJP">Penerima KIP / KJP (Aktif)</option>
+                    <option value="Penerima KJP Plus">Penerima KJP Plus (DKI Jakarta)</option>
+                    <option value="Beasiswa Prestasi">Beasiswa Prestasi</option>
+                    <option value="Non-Penerima">Non-Penerima (Belum Ada Bantuan)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Tingkat Kehadiran (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={editingStudent.kehadiran}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, kehadiran: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Nilai Rata-rata</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    value={editingStudent.nilaiRataRata}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, nilaiRataRata: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Kebutuhan Siswa / Catatan Khusus</label>
+                <textarea
+                  rows={3}
+                  placeholder="Misal: Perlu bantuan seragam & sepatu KJP, kendala perangkat gawai..."
+                  value={editingStudent.kebutuhan || ''}
+                  onChange={(e) => setEditingStudent({ ...editingStudent, kebutuhan: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="p-4 border-t border-gray-100 flex items-center justify-end gap-2.5 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setEditingStudent(null)}
+                  className="px-4 py-2 border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Simpan Perubahan</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* 1. DETAIL SISWA MODAL */}
       {selectedStudent && (
         <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
@@ -1253,21 +1529,29 @@ export default function DataSekolahView({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="font-bold text-gray-700 block mb-1">Kelas / Rombel</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-gray-700 block">Kelas / Rombel</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddStudentModalOpen(false);
+                        setIsAddClassModalOpen(true);
+                      }}
+                      className="text-[11px] text-blue-600 font-bold hover:underline cursor-pointer"
+                    >
+                      + Tambah Kelas
+                    </button>
+                  </div>
                   <select
-                    value={newStudent.kelas}
+                    value={newStudent.kelas || availableClassNames[0] || ''}
                     onChange={(e) => setNewStudent({ ...newStudent, kelas: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none cursor-pointer text-sm font-semibold"
                   >
-                    <option value="7A">Kelas 7A</option>
-                    <option value="7B">Kelas 7B</option>
-                    <option value="7C">Kelas 7C</option>
-                    <option value="8A">Kelas 8A</option>
-                    <option value="8B">Kelas 8B</option>
-                    <option value="8C">Kelas 8C</option>
-                    <option value="9A">Kelas 9A</option>
-                    <option value="9B">Kelas 9B</option>
-                    <option value="9C">Kelas 9C</option>
+                    {availableClassNames.map((k) => (
+                      <option key={k} value={k}>
+                        Kelas {k}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -1614,9 +1898,10 @@ export default function DataSekolahView({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="font-bold text-gray-700 block mb-1">Email Aktif</label>
+                  <label className="font-bold text-gray-700 block mb-1">Email Login Guru *</label>
                   <input
                     type="email"
+                    required
                     placeholder="nama.guru@sekolah.sch.id"
                     value={newTeacher.email}
                     onChange={(e) => setNewTeacher({ ...newTeacher, email: e.target.value })}
@@ -1625,15 +1910,33 @@ export default function DataSekolahView({
                 </div>
 
                 <div>
-                  <label className="font-bold text-gray-700 block mb-1">Nomor Telepon / WhatsApp</label>
+                  <label className="font-bold text-gray-700 block mb-1">Password Akun (Default: password)</label>
                   <input
-                    type="tel"
-                    placeholder="081234567890"
-                    value={newTeacher.telepon}
-                    onChange={(e) => setNewTeacher({ ...newTeacher, telepon: e.target.value })}
+                    type="text"
+                    placeholder="password"
+                    value={newTeacher.password}
+                    onChange={(e) => setNewTeacher({ ...newTeacher, password: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Nomor Telepon / WhatsApp</label>
+                <input
+                  type="tel"
+                  placeholder="081234567890"
+                  value={newTeacher.telepon}
+                  onChange={(e) => setNewTeacher({ ...newTeacher, telepon: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                />
+              </div>
+
+              <div className="p-3 bg-blue-50/80 rounded-xl border border-blue-100 flex items-start gap-2 text-xs text-blue-900">
+                <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                <p>
+                  <strong>Otomatis Buat Akun Pengguna:</strong> Data guru baru otomatis didaftarkan ke tabel <code>users</code> dengan role <strong>guru</strong>. Guru yang bersangkutan dapat langsung login ke aplikasi MERATA menggunakan email & password di atas.
+                </p>
               </div>
 
               <div>
@@ -2100,6 +2403,120 @@ export default function DataSekolahView({
                 Ya, Hapus Fasilitas
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 12. MODAL: TAMBAH ROMBEL KELAS BARU */}
+      {isAddClassModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-extrabold text-sm">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-gray-900">Tambah Rombel Kelas</h3>
+                  <p className="text-[11px] text-gray-400">Buat rombongan belajar baru untuk sekolah</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddClassModalOpen(false)}
+                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateClass} className="p-6 space-y-4 overflow-y-auto text-xs">
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">
+                  Nama Kelas / Rombel *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: X TKJ 2, 7D, XI RPL 1, 1B"
+                  value={newClass.nama}
+                  onChange={(e) => setNewClass({ ...newClass, nama: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none font-semibold text-gray-900"
+                />
+                <span className="text-[10px] text-gray-400 mt-1 block">
+                  Nama rombel akan otomatis muncul di pilihan pendaftaran siswa baru.
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Tingkat Kelas</label>
+                  <select
+                    value={newClass.tingkat}
+                    onChange={(e) => setNewClass({ ...newClass, tingkat: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none cursor-pointer"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((t) => (
+                      <option key={t} value={String(t)}>
+                        Tingkat / Kelas {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Ruangan / Gedung</label>
+                  <input
+                    type="text"
+                    placeholder="Misal: Gedung B Lt. 2"
+                    value={newClass.ruang}
+                    onChange={(e) => setNewClass({ ...newClass, ruang: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Wali Kelas</label>
+                <select
+                  value={newClass.waliKelasId}
+                  onChange={(e) => {
+                    const selId = e.target.value;
+                    const teacher = teachers.find((t) => String(t.id) === String(selId) || String(t.dbId) === String(selId));
+                    setNewClass({
+                      ...newClass,
+                      waliKelasId: selId,
+                      waliKelasNama: teacher?.nama || '-'
+                    });
+                  }}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:outline-none cursor-pointer"
+                >
+                  <option value="">-- Pilih Guru Wali Kelas (Opsional) --</option>
+                  {teachers.map((t) => (
+                    <option key={t.id} value={t.dbId || t.id}>
+                      {t.nama} ({t.mapel || 'Guru'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAddClassModalOpen(false)}
+                  className="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold rounded-xl text-xs cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-xs cursor-pointer flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Simpan Rombel Kelas</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

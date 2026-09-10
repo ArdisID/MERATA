@@ -11,8 +11,8 @@ class Submateri extends Model
 
     protected $fillable = [
         'materi_id', 'nomor', 'judul', 'durasi', 'tujuan',
-        'materi_utama', 'ilustrasi', 'video', 'contoh_soal',
-        'slides',
+        'materi_utama', 'ilustrasi', 'video', 'video_url', 'ppt_url', 'ppt_filename',
+        'contoh_soal', 'slides',
     ];
 
     protected function casts(): array

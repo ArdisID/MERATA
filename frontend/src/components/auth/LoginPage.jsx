@@ -42,6 +42,26 @@ export default function LoginPage({ onLoginSuccess }) {
     },
   };
 
+  const demoAccounts = {
+    guru: [
+      { label: 'SMP 1 Merata', email: 'guru@merata.id', badge: 'SMP' },
+      { label: 'SMK 26 Jakarta', email: 'guru.smk26@merata.id', badge: 'SMK' },
+      { label: 'SD Merata 03', email: 'guru.sd03@merata.id', badge: 'SD' },
+      { label: 'SMA 70 Jakarta', email: 'guru.sma70@merata.id', badge: 'SMA' },
+      { label: 'SMP 45 P. Seribu', email: 'guru.smp45@merata.id', badge: '3T' },
+    ],
+    admin: [
+      { label: 'SMP 1 Merata', email: 'admin@merata.id', badge: 'SMP' },
+      { label: 'SMK 26 Jakarta', email: 'admin.smk26@merata.id', badge: 'SMK' },
+      { label: 'SD Merata 03', email: 'admin.sd03@merata.id', badge: 'SD' },
+      { label: 'SMA 70 Jakarta', email: 'admin.sma70@merata.id', badge: 'SMA' },
+      { label: 'SMP 45 P. Seribu', email: 'admin.smp45@merata.id', badge: '3T' },
+    ],
+    pemerintah: [
+      { label: 'Dinas Pendidikan DKI', email: 'pemerintah@merata.id', badge: 'Dinas' },
+    ],
+  };
+
   const handleTabChange = (role) => {
     setActiveTab(role);
     setEmail(roleConfig[role].defaultEmail);
@@ -159,11 +179,10 @@ export default function LoginPage({ onLoginSuccess }) {
                     key={role}
                     type="button"
                     onClick={() => handleTabChange(role)}
-                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all duration-300 cursor-pointer text-center ${
-                      isActive
+                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all duration-300 cursor-pointer text-center ${isActive
                         ? 'bg-white text-gray-900 shadow-sm'
                         : 'text-gray-500 hover:text-gray-800'
-                    }`}
+                      }`}
                   >
                     {roleConfig[role].title}
                   </button>
@@ -275,6 +294,44 @@ export default function LoginPage({ onLoginSuccess }) {
                 )}
               </button>
             </div>
+
+            {/* Quick Demo Account Selector */}
+            {/* <div className="pt-4 border-t border-gray-100 space-y-2">
+              <div className="flex items-center justify-between text-[11px] text-gray-500 font-semibold">
+                <span>Pilih Cepat Akun Uji Coba:</span>
+                <span className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                  Password: password
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {demoAccounts[activeTab]?.map((acc) => {
+                  const isSelected = email === acc.email;
+                  return (
+                    <button
+                      key={acc.email}
+                      type="button"
+                      onClick={() => {
+                        setEmail(acc.email);
+                        setPassword('password');
+                        setErrorMessage('');
+                      }}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                        isSelected
+                          ? 'bg-blue-600 text-white shadow-xs font-bold ring-2 ring-blue-500/30'
+                          : 'bg-gray-100 hover:bg-gray-200/80 text-gray-700'
+                      }`}
+                    >
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                        isSelected ? 'bg-white/20 text-white' : 'bg-white text-gray-600 border border-gray-200'
+                      }`}>
+                        {acc.badge}
+                      </span>
+                      <span>{acc.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div> */}
           </form>
         </div>
       </div>

@@ -15,7 +15,7 @@ class Kebutuhan extends Model
         'sekolah_id', 'guru_id', 'kode', 'judul', 'kategori',
         'pemohon', 'peran_pemohon', 'tanggal', 'urgensi', 'urgensi_badge',
         'estimasi_biaya', 'justifikasi', 'status', 'status_label',
-        'catatan_admin', 'lampiran', 'tipe', 'biaya', 'keterangan',
+        'catatan_admin', 'lampiran', 'bukti_url', 'tipe', 'biaya', 'keterangan',
     ];
 
     public function sekolah()

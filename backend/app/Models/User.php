@@ -24,6 +24,7 @@ class User extends Authenticatable
         'password',
         'role',
         'avatar',
+        'sekolah_id',
     ];
 
     /**
@@ -55,6 +56,22 @@ class User extends Authenticatable
     public function guru()
     {
         return $this->hasOne(Guru::class);
+    }
+
+    /**
+     * Get the school this user belongs to (for admin users).
+     */
+    public function sekolah()
+    {
+        return $this->belongsTo(Sekolah::class);
+    }
+
+    /**
+     * Get the government profile for this user.
+     */
+    public function profilDinas()
+    {
+        return $this->hasOne(ProfilDinas::class);
     }
 
     /**

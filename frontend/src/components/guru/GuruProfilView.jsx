@@ -18,12 +18,15 @@ import {
   Trash2,
   X,
   UploadCloud,
-  Image
+  Image,
+  Camera,
+  Save
 } from 'lucide-react';
 import api from '../../services/api';
 
 export default function GuruProfilView({
   teacherProfile,
+  setTeacherProfile,
   teacherNeeds,
   setTeacherNeeds,
   onAddNewNeed
@@ -40,6 +43,58 @@ export default function GuruProfilView({
   const [toastMessage, setToastMessage] = useState('');
   const [uploadedFile, setUploadedFile] = useState(null);
   const [uploadingFile, setUploadingFile] = useState(false);
+
+  const [isEditingProfileModal, setIsEditingProfileModal] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    nama: teacherProfile?.nama || '',
+    nip: teacherProfile?.nip || '',
+    mapel: teacherProfile?.mapel || '',
+    sertifikasi: teacherProfile?.sertifikasi || 'Sudah Sertifikasi',
+    avatar: teacherProfile?.avatar || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=250',
+  });
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingAvatar(true);
+    try {
+      const res = await api.upload(file, 'avatar');
+      if (res?.url) {
+        setProfileForm((prev) => ({ ...prev, avatar: res.url }));
+        if (setTeacherProfile) {
+          setTeacherProfile((prev) => ({ ...prev, avatar: res.url }));
+        }
+        showToast('Foto profil berhasil diunggah!');
+      }
+    } catch (err) {
+      console.warn('Avatar upload warning:', err);
+      const localUrl = URL.createObjectURL(file);
+      setProfileForm((prev) => ({ ...prev, avatar: localUrl }));
+      if (setTeacherProfile) {
+        setTeacherProfile((prev) => ({ ...prev, avatar: localUrl }));
+      }
+      showToast('Foto profil diperbarui (lokal).');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleSaveProfileSubmit = async (e) => {
+    e.preventDefault();
+    if (setTeacherProfile) {
+      setTeacherProfile((prev) => ({
+        ...prev,
+        nama: profileForm.nama,
+        nip: profileForm.nip,
+        mapel: profileForm.mapel,
+        sertifikasi: profileForm.sertifikasi,
+        avatar: profileForm.avatar,
+      }));
+    }
+    setIsEditingProfileModal(false);
+    showToast('Profil Pendidik berhasil diperbarui!');
+  };
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -216,33 +271,53 @@ export default function GuruProfilView({
         {/* Left Side: Profile Card */}
         <div className="lg:col-span-4 space-y-5">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 text-center space-y-4">
-            <div className="relative inline-block">
+            <div className="relative inline-block group">
               <img
-                src={teacherProfile?.avatar}
+                src={teacherProfile?.avatar || profileForm.avatar}
                 alt="Avatar"
                 className="w-24 h-24 rounded-2xl object-cover ring-4 ring-blue-50 mx-auto shadow-md"
               />
-              <span className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-emerald-500 ring-2 ring-white flex items-center justify-center text-white text-[10px]">
-                ✓
-              </span>
+              <label className="absolute inset-0 bg-black/40 rounded-2xl flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-[10px] font-bold">
+                <Camera className="w-5 h-5 mb-0.5" />
+                <span>Ubah Foto</span>
+                <input type="file" accept="image/*" onChange={handleAvatarUpload} className="sr-only" />
+              </label>
             </div>
 
             <div>
               <h2 className="text-base font-extrabold text-gray-900">{teacherProfile?.nama}</h2>
-              <p className="text-xs text-blue-600 font-semibold mt-0.5">{teacherProfile?.peran}</p>
+              <p className="text-xs text-blue-600 font-semibold mt-0.5">{teacherProfile?.peran || teacherProfile?.mapel}</p>
               <p className="text-[11px] text-gray-400 font-mono mt-1">NIP: {teacherProfile?.nip}</p>
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setProfileForm({
+                  nama: teacherProfile?.nama || '',
+                  nip: teacherProfile?.nip || '',
+                  mapel: teacherProfile?.mapel || '',
+                  sertifikasi: teacherProfile?.sertifikasi || 'Sudah Sertifikasi',
+                  avatar: teacherProfile?.avatar || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=250',
+                });
+                setIsEditingProfileModal(true);
+              }}
+              className="w-full py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Edit2 className="w-3.5 h-3.5" />
+              <span>Edit Profil & Foto</span>
+            </button>
 
             <div className="grid grid-cols-2 gap-2 pt-2 text-xs">
               <div className="p-3 bg-blue-50/60 rounded-xl">
                 <span className="text-[10px] font-bold text-gray-400 uppercase block">Lama Mengajar</span>
-                <span className="font-extrabold text-gray-900">{teacherProfile?.lamaMengajar}</span>
+                <span className="font-extrabold text-gray-900">{teacherProfile?.lamaMengajar || '5 Tahun'}</span>
               </div>
               <div className="p-3 bg-amber-50/60 rounded-xl">
                 <span className="text-[10px] font-bold text-gray-400 uppercase block">Poin Kontribusi</span>
                 <span className="font-extrabold text-amber-700 flex items-center justify-center gap-1">
                   <Sparkles className="w-3.5 h-3.5" />
-                  {teacherProfile?.poinKontribusi}
+                  {teacherProfile?.poinKontribusi || 120}
                 </span>
               </div>
             </div>
@@ -251,7 +326,7 @@ export default function GuruProfilView({
               <span className="font-bold text-gray-700 block">Sertifikasi Resmi:</span>
               <p className="text-emerald-700 font-semibold flex items-center gap-1.5">
                 <Award className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>{teacherProfile?.sertifikasi}</span>
+                <span>{teacherProfile?.sertifikasi || 'Sudah Sertifikasi'}</span>
               </p>
             </div>
           </div>
@@ -444,6 +519,107 @@ export default function GuruProfilView({
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Kirim Usulan Kebutuhan</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL EDIT PROFIL GURU ================= */}
+      {isEditingProfileModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <h3 className="font-extrabold text-base text-gray-900 flex items-center gap-2">
+                <User className="w-5 h-5 text-blue-600" />
+                <span>Edit Profil Pendidik</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsEditingProfileModal(false)}
+                className="p-1 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfileSubmit} className="space-y-4 text-xs">
+              <div className="text-center space-y-2">
+                <div className="relative inline-block group">
+                  <img
+                    src={profileForm.avatar}
+                    alt="Foto Profil"
+                    className="w-20 h-20 rounded-2xl object-cover ring-4 ring-blue-100 mx-auto shadow-md"
+                  />
+                  <label className="absolute inset-0 bg-black/40 rounded-2xl flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer font-bold text-[10px]">
+                    <Camera className="w-5 h-5 mb-0.5" />
+                    <span>Ganti Foto</span>
+                    <input type="file" accept="image/*" onChange={handleAvatarUpload} className="sr-only" />
+                  </label>
+                </div>
+                <p className="text-[10px] text-gray-400">Klik pada foto di atas untuk mengunggah foto profil baru</p>
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Nama Lengkap & Gelar</label>
+                <input
+                  type="text"
+                  required
+                  value={profileForm.nama}
+                  onChange={(e) => setProfileForm({ ...profileForm, nama: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">NIP / NUPTK</label>
+                  <input
+                    type="text"
+                    value={profileForm.nip}
+                    onChange={(e) => setProfileForm({ ...profileForm, nip: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl font-mono text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Mata Pelajaran</label>
+                  <input
+                    type="text"
+                    value={profileForm.mapel}
+                    onChange={(e) => setProfileForm({ ...profileForm, mapel: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Status Sertifikasi</label>
+                <select
+                  value={profileForm.sertifikasi}
+                  onChange={(e) => setProfileForm({ ...profileForm, sertifikasi: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                >
+                  <option value="Sudah Sertifikasi Pendidik (Sertifikasi 2024)">Sudah Sertifikasi Pendidik</option>
+                  <option value="Proses Sertifikasi (PPG 2026)">Proses Sertifikasi (PPG)</option>
+                  <option value="Belum Sertifikasi">Belum Sertifikasi</option>
+                </select>
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingProfileModal(false)}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>Simpan Perubahan</span>
                 </button>
               </div>
             </form>

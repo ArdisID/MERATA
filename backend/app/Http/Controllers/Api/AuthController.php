@@ -39,6 +39,8 @@ class AuthController extends Controller
 
         $token = $user->createToken('merata-api')->plainTextToken;
 
+        $user->load(['sekolah', 'guru.sekolah']);
+
         return response()->json([
             'message' => 'Login berhasil',
             'user' => [
@@ -47,6 +49,9 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'role' => $user->role,
                 'avatar' => $user->avatar,
+                'sekolah_id' => $user->sekolah_id,
+                'sekolah' => $user->sekolah,
+                'guru' => $user->guru,
             ],
             'token' => $token,
         ]);
@@ -79,12 +84,16 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         $user = $request->user();
+        $user->load(['sekolah', 'guru.sekolah']);
+
         $data = [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->role,
             'avatar' => $user->avatar,
+            'sekolah_id' => $user->sekolah_id,
+            'sekolah' => $user->sekolah,
         ];
 
         // If guru, include teacher profile

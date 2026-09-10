@@ -19,21 +19,117 @@ import {
   Wrench,
   FileText
 } from 'lucide-react';
-import { bantuanStages, attentionList, schoolNeedsSummary } from '../../data/mockAdminData';
 
 export default function AdminDashboard({
   setActiveTab,
   stats,
-  students,
-  verifications,
+  students = [],
+  verifications = [],
   setSelectedVerification,
-  setIsVerifyModalOpen
+  setIsVerifyModalOpen,
+  schoolProfile = {},
+  currentUser = null
 }) {
+  const safeStats = stats || {
+    totalSiswa: students?.length || 0,
+    trendSiswa: 'Data Real-time',
+    totalGuru: 0,
+    trendGuru: 'Terkonfirmasi',
+    totalKelas: 0,
+    trendKelas: 'Aktif',
+    tingkatKehadiran: '100%',
+    trendKehadiran: 'Stabil',
+  };
+
+  // Filter urgent pending verifications
+  const pendingVerifications = (verifications || []).filter((v) => v.status === 'menunggu');
+
+  // Alur Status Bantuan stages
+  const bantuanStages = [
+    { id: 1, name: 'Pengajuan', icon: FileText, count: pendingVerifications?.length || 0, status: 'completed' },
+    { id: 2, name: 'Verifikasi', icon: FileCheck2, count: verifications?.filter(v => v.status === 'menunggu')?.length || 0, status: 'current' },
+    { id: 3, name: 'Disetujui', icon: PackageCheck, count: verifications?.filter(v => v.status === 'disetujui')?.length || 0, status: 'pending' },
+    { id: 4, name: 'Pengiriman', icon: Send, count: verifications?.filter(v => v.status === 'dikirim')?.length || 0, status: 'pending' },
+    { id: 5, name: 'Diterima', icon: Package, count: verifications?.filter(v => v.status === 'diterima')?.length || 0, status: 'pending' },
+  ];
+
+  // Perlu Perhatian list
+  const attentionList = [
+    {
+      id: 1,
+      name: 'Data Siswa Belum Lengkap',
+      initials: 'DS',
+      initialsBg: 'bg-amber-50 text-amber-700',
+      role: 'Data',
+      warning: `${students?.filter(s => !s.nik || !s.nisn)?.length || 0} siswa belum memiliki NIK/NISN lengkap`,
+    },
+    {
+      id: 2,
+      name: 'Verifikasi Tertunda',
+      initials: 'VT',
+      initialsBg: 'bg-rose-50 text-rose-700',
+      role: 'Proses',
+      warning: `${verifications?.filter(v => v.status === 'menunggu')?.length || 0} pengajuan menunggu verifikasi`,
+    },
+    {
+      id: 3,
+      name: 'Kehadiran Rendah',
+      initials: 'KR',
+      initialsBg: 'bg-orange-50 text-orange-700',
+      role: 'Monitoring',
+      warning: 'Pantau tingkat kehadiran siswa secara berkala',
+    },
+  ];
+
+  // Ringkasan Kebutuhan Sekolah
+  const schoolNeedsSummary = [
+    {
+      id: 1,
+      name: 'Sarana Pembelajaran',
+      percentage: 72,
+      color: 'bg-blue-500',
+      budgetSpent: 'Rp 45.2 Jt / Rp 62.8 Jt',
+      status: 'On Track',
+      statusBadge: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+      isUrgent: false,
+    },
+    {
+      id: 2,
+      name: 'Prasarana Gedung',
+      percentage: 38,
+      color: 'bg-rose-500',
+      budgetSpent: 'Rp 28.1 Jt / Rp 74.0 Jt',
+      status: 'Tertunda',
+      statusBadge: 'border-rose-200 bg-rose-50 text-rose-700',
+      isUrgent: true,
+    },
+    {
+      id: 3,
+      name: 'Alat & Media Digital',
+      percentage: 55,
+      color: 'bg-indigo-500',
+      budgetSpent: 'Rp 18.5 Jt / Rp 33.6 Jt',
+      status: 'Proses',
+      statusBadge: 'border-amber-200 bg-amber-50 text-amber-700',
+      isUrgent: false,
+    },
+    {
+      id: 4,
+      name: 'Buku & Referensi',
+      percentage: 88,
+      color: 'bg-emerald-500',
+      budgetSpent: 'Rp 12.3 Jt / Rp 14.0 Jt',
+      status: 'Selesai',
+      statusBadge: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+      isUrgent: false,
+    },
+  ];
+
   const summaryCards = [
     {
       title: 'Total Siswa',
-      value: stats.totalSiswa.toLocaleString('id-ID'),
-      trend: stats.trendSiswa,
+      value: (safeStats.totalSiswa ?? students?.length ?? 0).toLocaleString('id-ID'),
+      trend: safeStats.trendSiswa || 'Stabil',
       trendType: 'up',
       icon: Users,
       iconBg: 'bg-blue-50 text-blue-600',
@@ -41,8 +137,8 @@ export default function AdminDashboard({
     },
     {
       title: 'Total Guru',
-      value: stats.totalGuru,
-      trend: stats.trendGuru,
+      value: safeStats.totalGuru ?? 0,
+      trend: safeStats.trendGuru || 'Stabil',
       trendType: 'up',
       icon: GraduationCap,
       iconBg: 'bg-indigo-50 text-indigo-600',
@@ -50,8 +146,8 @@ export default function AdminDashboard({
     },
     {
       title: 'Total Rombel Kelas',
-      value: stats.totalKelas,
-      trend: stats.trendKelas,
+      value: safeStats.totalKelas ?? 0,
+      trend: safeStats.trendKelas || 'Stabil',
       trendType: 'neutral',
       icon: BookOpen,
       iconBg: 'bg-slate-100 text-slate-700',
@@ -59,8 +155,8 @@ export default function AdminDashboard({
     },
     {
       title: 'Tingkat Kehadiran',
-      value: stats.tingkatKehadiran,
-      trend: stats.trendKehadiran,
+      value: safeStats.tingkatKehadiran || '100%',
+      trend: safeStats.trendKehadiran || 'Stabil',
       trendType: 'down',
       icon: CheckCircle2,
       iconBg: 'bg-teal-50 text-teal-600',
@@ -68,16 +164,20 @@ export default function AdminDashboard({
     },
   ];
 
-  // Filter urgent pending verifications
-  const pendingVerifications = verifications.filter((v) => v.status === 'menunggu');
 
   return (
     <div className="space-y-6 page-transition">
       {/* TITLE SECTION */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Ringkasan Administrasi Sekolah</h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Ringkasan Administrasi Sekolah</h1>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-blue-50 text-blue-700 border border-blue-200 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+              {schoolProfile?.nama || currentUser?.sekolah?.nama || 'Admin Sekolah'}
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Pantau metrik utama, verifikasi kebutuhan sarpras, dan pelacakan program bantuan sekolah.
           </p>
         </div>

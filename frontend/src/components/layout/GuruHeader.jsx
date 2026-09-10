@@ -159,23 +159,23 @@ export default function GuruHeader({
               alt="Avatar Guru"
               className="w-8 h-8 rounded-full object-cover ring-2 ring-blue-100"
             />
-            <div className="hidden md:block text-left pr-1">
-              <p className="text-xs font-bold text-slate-900 leading-tight">{teacherProfile?.nama || 'Siti Rahmawati'}</p>
-              <p className="text-[11px] text-slate-400 font-medium">Guru Kelas & Wali</p>
+            <div className="hidden md:block text-left pr-1 max-w-[160px]">
+              <p className="text-xs font-bold text-slate-900 leading-tight truncate">{teacherProfile?.nama || 'Pendidik'}</p>
+              <p className="text-[11px] text-slate-400 font-medium truncate">{teacherProfile?.sekolah || 'Portal Guru'}</p>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden md:block" />
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-xs">
+            <div className="absolute right-0 mt-2 w-60 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-xs">
               <div className="px-3.5 py-2.5 border-b border-slate-100">
-                <p className="font-bold text-slate-900">{teacherProfile?.nama || 'Siti Rahmawati'}</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">NIP: {teacherProfile?.nip || '198503152010012015'}</p>
+                <p className="font-bold text-slate-900 truncate">{teacherProfile?.nama || 'Pendidik'}</p>
+                <p className="text-[11px] text-slate-400 mt-0.5 font-mono">NIP: {teacherProfile?.nip || '-'}</p>
                 <div className="mt-1.5 flex items-center gap-1.5">
-                  <span className="inline-block px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] font-semibold">
-                    Portal Guru
+                  <span className="inline-block px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] font-semibold shrink-0">
+                    {teacherProfile?.mapel || 'Pendidik'}
                   </span>
-                  <span className="text-[10px] text-slate-400">{teacherProfile?.mapel || 'Matematika'}</span>
+                  <span className="text-[10px] text-slate-500 font-medium truncate">{teacherProfile?.sekolah || 'Sekolah'}</span>
                 </div>
               </div>
               <div className="p-1">

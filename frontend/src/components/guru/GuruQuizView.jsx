@@ -17,13 +17,23 @@ import { triggerConfetti } from '../../utils/confettiUtils';
 import { sound } from '../../utils/audioUtils';
 import api from '../../services/api';
 
-export default function GuruQuizView({ students, setStudents }) {
+export default function GuruQuizView({ students, setStudents, activeClass }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({}); // { [questionId]: optionIndex }
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(mockQuizData.durasiMenit * 60);
   const [selectedStudentId, setSelectedStudentId] = useState(students?.[0]?.id || '');
   const [toastMessage, setToastMessage] = useState('');
+
+  // Sync selectedStudentId when students prop changes
+  useEffect(() => {
+    if (students && students.length > 0) {
+      const exists = students.some((s) => s.id === selectedStudentId);
+      if (!exists) {
+        setSelectedStudentId(students[0].id);
+      }
+    }
+  }, [students, selectedStudentId]);
 
   const handleSubmitQuiz = React.useCallback(() => {
     setIsSubmitted(true);
@@ -359,7 +369,7 @@ export default function GuruQuizView({ students, setStudents }) {
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto p-4 bg-blue-50/60 border border-blue-100 rounded-2xl">
               <div className="text-left w-full sm:w-auto">
                 <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider block">
-                  Rekam Skor ke Siswa:
+                  Rekam Skor ke Siswa {activeClass?.nama ? `(${activeClass.nama})` : ''}:
                 </span>
                 <select
                   value={selectedStudentId}

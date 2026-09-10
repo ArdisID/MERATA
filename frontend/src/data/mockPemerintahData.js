@@ -112,7 +112,61 @@ export const initialCurriculumMaterials = [
     tanggalTerbit: '15 Agt 2026',
     status: 'Terdistribusi Nasional',
     badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    deskripsi: 'Memahami konsep dasar bagian dari keseluruhan, operasi hitung pecahan biasa, campuran, desimal, dan aplikasinya.'
+    deskripsi: 'Memahami konsep dasar bagian dari keseluruhan, operasi hitung pecahan biasa, campuran, desimal, dan aplikasinya.',
+    submateris: [
+      {
+        nomor: 1,
+        judul: 'Mengenal Konsep Pecahan',
+        durasi: '2 JP (70 Menit)',
+        materiUtama: 'Pecahan adalah bilangan yang menyatakan bagian dari sebuah keutuhan atau kelompok. Pembilang di atas dan penyebut di bawah.',
+        materi_utama: 'Pecahan adalah bilangan yang menyatakan bagian dari sebuah keutuhan atau kelompok. Pembilang di atas dan penyebut di bawah.',
+        video_url: null,
+        ppt_url: null,
+      },
+      {
+        nomor: 2,
+        judul: 'Pecahan Biasa dan Pecahan Desimal',
+        durasi: '2 JP (70 Menit)',
+        materiUtama: 'Mengubah pecahan biasa menjadi pecahan desimal dengan kelipatan 10, 100, atau 1000 serta identifikasi pecahan murni vs tidak murni.',
+        materi_utama: 'Mengubah pecahan biasa menjadi pecahan desimal dengan kelipatan 10, 100, atau 1000 serta identifikasi pecahan murni vs tidak murni.',
+        video_url: null,
+        ppt_url: null,
+      },
+      {
+        nomor: 3,
+        judul: 'Pecahan Campuran',
+        durasi: '2 JP (70 Menit)',
+        materiUtama: 'Pecahan campuran terdiri dari bilangan bulat dan pecahan biasa (contoh: 2 1/3). Cara konversi dari pecahan tidak murni ke campuran.',
+        materi_utama: 'Pecahan campuran terdiri dari bilangan bulat dan pecahan biasa (contoh: 2 1/3). Cara konversi dari pecahan tidak murni ke campuran.',
+        video_url: null,
+        ppt_url: null,
+      },
+      {
+        nomor: 4,
+        judul: 'Membandingkan dan Mengurutkan Pecahan',
+        durasi: '2 JP (70 Menit)',
+        materiUtama: 'Teknik membandingkan dua pecahan menggunakan perkalian silang (cross product) atau menyamakan penyebut menggunakan KPK.',
+        materi_utama: 'Teknik membandingkan dua pecahan menggunakan perkalian silang (cross product) atau menyamakan penyebut menggunakan KPK.',
+        video_url: null,
+        ppt_url: null,
+      },
+      {
+        nomor: 5,
+        judul: 'Penjumlahan dan Pengurangan Pecahan',
+        durasi: '4 JP (140 Menit)',
+        materiUtama: 'Operasi hitung penjumlahan dan pengurangan pecahan berpenyebut sama dan berbeda dengan menyamakan KPK.',
+        materi_utama: 'Operasi hitung penjumlahan dan pengurangan pecahan berpenyebut sama dan berbeda dengan menyamakan KPK.',
+        video_url: null,
+        ppt_url: null,
+      }
+    ],
+    submateri: [
+      { nomor: 1, judul: 'Mengenal Konsep Pecahan', durasi: '2 JP (70 Menit)', materiUtama: 'Pecahan adalah bilangan yang menyatakan bagian dari sebuah keutuhan atau kelompok.' },
+      { nomor: 2, judul: 'Pecahan Biasa dan Pecahan Desimal', durasi: '2 JP (70 Menit)', materiUtama: 'Mengubah pecahan biasa menjadi pecahan desimal dengan kelipatan 10, 100, atau 1000.' },
+      { nomor: 3, judul: 'Pecahan Campuran', durasi: '2 JP (70 Menit)', materiUtama: 'Pecahan campuran terdiri dari bilangan bulat dan pecahan biasa.' },
+      { nomor: 4, judul: 'Membandingkan dan Mengurutkan Pecahan', durasi: '2 JP (70 Menit)', materiUtama: 'Teknik membandingkan dua pecahan menggunakan perkalian silang.' },
+      { nomor: 5, judul: 'Penjumlahan dan Pengurangan Pecahan', durasi: '4 JP (140 Menit)', materiUtama: 'Operasi hitung penjumlahan dan pengurangan pecahan berpenyebut sama dan berbeda.' }
+    ]
   },
   {
     id: 'MAT-002',
@@ -125,7 +179,51 @@ export const initialCurriculumMaterials = [
     tanggalTerbit: '20 Agt 2026',
     status: 'Terdistribusi Nasional',
     badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    deskripsi: 'Pengenalan pola algoritma, dekomposisi masalah, dan implementasi coding visual Scratch.'
+    deskripsi: 'Pengenalan pola algoritma, dekomposisi masalah, dan implementasi coding visual Scratch.',
+    submateris: [
+      {
+        nomor: 1,
+        judul: 'Pengenalan 4 Pilar Berpikir Komputasional',
+        durasi: '2 JP (70 Menit)',
+        materiUtama: 'Dekomposisi, Pengenalan Pola, Abstraksi, dan Perancangan Algoritma dalam pemecahan masalah sehari-hari.',
+        materi_utama: 'Dekomposisi, Pengenalan Pola, Abstraksi, dan Perancangan Algoritma dalam pemecahan masalah sehari-hari.',
+        video_url: null,
+        ppt_url: null,
+      },
+      {
+        nomor: 2,
+        judul: 'Dekomposisi & Pengenalan Pola Masalah',
+        durasi: '2 JP (70 Menit)',
+        materiUtama: 'Memecah masalah kompleks menjadi bagian-bagian kecil yang dapat dikelola dan mencari kesamaan pola antar data.',
+        materi_utama: 'Memecah masalah kompleks menjadi bagian-bagian kecil yang dapat dikelola dan mencari kesamaan pola antar data.',
+        video_url: null,
+        ppt_url: null,
+      },
+      {
+        nomor: 3,
+        judul: 'Logika Percabangan (If-Else) & Perulangan (Loop)',
+        durasi: '2 JP (70 Menit)',
+        materiUtama: 'Membuat alur keputusan kondisional dan perulangan perintah menggunakan flowchart dan pseudocode.',
+        materi_utama: 'Membuat alur keputusan kondisional dan perulangan perintah menggunakan flowchart dan pseudocode.',
+        video_url: null,
+        ppt_url: null,
+      },
+      {
+        nomor: 4,
+        judul: 'Implementasi Coding Visual Blok (Scratch)',
+        durasi: '2 JP (70 Menit)',
+        materiUtama: 'Praktik membuat animasi dan game interaktif sederhana dengan menyusun blok kode visual Scratch.',
+        materi_utama: 'Praktik membuat animasi dan game interaktif sederhana dengan menyusun blok kode visual Scratch.',
+        video_url: null,
+        ppt_url: null,
+      }
+    ],
+    submateri: [
+      { nomor: 1, judul: 'Pengenalan 4 Pilar Berpikir Komputasional', durasi: '2 JP (70 Menit)', materiUtama: 'Dekomposisi, Pengenalan Pola, Abstraksi, dan Perancangan Algoritma.' },
+      { nomor: 2, judul: 'Dekomposisi & Pengenalan Pola Masalah', durasi: '2 JP (70 Menit)', materiUtama: 'Memecah masalah kompleks menjadi bagian-bagian kecil.' },
+      { nomor: 3, judul: 'Logika Percabangan (If-Else) & Perulangan (Loop)', durasi: '2 JP (70 Menit)', materiUtama: 'Membuat alur keputusan kondisional dan perulangan perintah.' },
+      { nomor: 4, judul: 'Implementasi Coding Visual Blok (Scratch)', durasi: '2 JP (70 Menit)', materiUtama: 'Praktik membuat animasi dan game interaktif sederhana.' }
+    ]
   },
   {
     id: 'MAT-003',
@@ -138,6 +236,50 @@ export const initialCurriculumMaterials = [
     tanggalTerbit: '22 Agt 2026',
     status: 'Terdistribusi Nasional',
     badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    deskripsi: 'Konsep variabel, koefisien, konstanta, dan penyelesaian masalah kontekstual persamaan aljabar.'
+    deskripsi: 'Konsep variabel, koefisien, konstanta, dan penyelesaian masalah kontekstual persamaan aljabar.',
+    submateris: [
+      {
+        nomor: 1,
+        judul: 'Mengenal Variabel, Koefisien, dan Konstanta',
+        durasi: '2 JP (70 Menit)',
+        materiUtama: 'Definisi unsur-unsur bentuk aljabar dan suku sejenis versus suku tidak sejenis.',
+        materi_utama: 'Definisi unsur-unsur bentuk aljabar dan suku sejenis versus suku tidak sejenis.',
+        video_url: null,
+        ppt_url: null,
+      },
+      {
+        nomor: 2,
+        judul: 'Operasi Penjumlahan & Pengurangan Aljabar',
+        durasi: '2 JP (70 Menit)',
+        materiUtama: 'Menyederhanakan suku-suku sejenis dalam bentuk aljabar linear dua atau tiga suku.',
+        materi_utama: 'Menyederhanakan suku-suku sejenis dalam bentuk aljabar linear dua atau tiga suku.',
+        video_url: null,
+        ppt_url: null,
+      },
+      {
+        nomor: 3,
+        judul: 'Perkalian dan Pembagian Bentuk Aljabar',
+        durasi: '2 JP (70 Menit)',
+        materiUtama: 'Distribusi perkalian suku tunggal dan suku dua, serta faktorisasi sederhana aljabar.',
+        materi_utama: 'Distribusi perkalian suku tunggal dan suku dua, serta faktorisasi sederhana aljabar.',
+        video_url: null,
+        ppt_url: null,
+      },
+      {
+        nomor: 4,
+        judul: 'Penyelesaian Persamaan Linear Satu Variabel (PLSV)',
+        durasi: '2 JP (70 Menit)',
+        materiUtama: 'Mencari nilai variabel pembuat benar menggunakan sifat kesetaraan operasi kedua ruas.',
+        materi_utama: 'Mencari nilai variabel pembuat benar menggunakan sifat kesetaraan operasi kedua ruas.',
+        video_url: null,
+        ppt_url: null,
+      }
+    ],
+    submateri: [
+      { nomor: 1, judul: 'Mengenal Variabel, Koefisien, dan Konstanta', durasi: '2 JP (70 Menit)', materiUtama: 'Definisi unsur-unsur bentuk aljabar dan suku sejenis.' },
+      { nomor: 2, judul: 'Operasi Penjumlahan & Pengurangan Aljabar', durasi: '2 JP (70 Menit)', materiUtama: 'Menyederhanakan suku-suku sejenis dalam bentuk aljabar.' },
+      { nomor: 3, judul: 'Perkalian dan Pembagian Bentuk Aljabar', durasi: '2 JP (70 Menit)', materiUtama: 'Distribusi perkalian suku tunggal dan suku dua.' },
+      { nomor: 4, judul: 'Penyelesaian Persamaan Linear Satu Variabel (PLSV)', durasi: '2 JP (70 Menit)', materiUtama: 'Mencari nilai variabel pembuat benar menggunakan sifat kesetaraan.' }
+    ]
   }
 ];

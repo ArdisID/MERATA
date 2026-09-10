@@ -39,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // Kelas & Pembelajaran
         Route::get('/kelas', [GuruController::class, 'kelasList']);
         Route::get('/kelas/{id}', [GuruController::class, 'kelasDetail']);
+        Route::get('/materi', [GuruController::class, 'materiList']);
         Route::get('/kelas/{kelasKode}/materi', [GuruController::class, 'kelasMateri']);
         Route::get('/kelas/{kelasKode}/quiz', [GuruController::class, 'kelasQuiz']);
         Route::get('/kelas/{kelasKode}/game', [GuruController::class, 'kelasGame']);
@@ -72,6 +73,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/guru/{id}', [AdminController::class, 'updateGuru']);
         Route::delete('/guru/{id}', [AdminController::class, 'deleteGuru']);
         Route::get('/kelas', [AdminController::class, 'kelasList']);
+        Route::post('/kelas', [AdminController::class, 'storeKelas']);
+        Route::delete('/kelas/{id}', [AdminController::class, 'destroyKelas']);
         Route::get('/fasilitas', [AdminController::class, 'fasilitasList']);
         Route::post('/fasilitas', [AdminController::class, 'storeFasilitas']);
         Route::put('/fasilitas/{id}', [AdminController::class, 'updateFasilitas']);
@@ -94,6 +97,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Monitoring
         Route::get('/sekolah', [PemerintahController::class, 'sekolahList']);
         Route::get('/sekolah/{id}', [PemerintahController::class, 'sekolahDetail']);
+        Route::post('/sekolah/{id}/admin', [PemerintahController::class, 'createAdminSekolah']);
+        Route::put('/sekolah/{id}/admin', [PemerintahController::class, 'updateAdminSekolah']);
         Route::get('/siswa', [PemerintahController::class, 'siswaList']);
         Route::get('/guru', [PemerintahController::class, 'guruList']);
         Route::get('/kelas', [PemerintahController::class, 'kelasList']);
@@ -102,14 +107,19 @@ Route::middleware('auth:sanctum')->group(function () {
         // Bank Materi
         Route::get('/materi', [PemerintahController::class, 'materiList']);
         Route::post('/materi', [PemerintahController::class, 'storeMateri']);
+        Route::put('/materi/{id}', [PemerintahController::class, 'updateMateri']);
+        Route::delete('/materi/{id}', [PemerintahController::class, 'deleteMateri']);
+        Route::post('/materi/{id}/submateri', [PemerintahController::class, 'storeSubmateri']);
 
         // Kebutuhan & Bantuan
         Route::get('/kebutuhan', [PemerintahController::class, 'kebutuhanList']);
         Route::put('/kebutuhan/{id}/approve', [PemerintahController::class, 'approveKebutuhan']);
         Route::put('/kebutuhan/{id}/reject', [PemerintahController::class, 'rejectKebutuhan']);
 
-        // Laporan & Profil
+        // Laporan & Profil & Statistik
         Route::get('/laporan', [PemerintahController::class, 'laporanList']);
         Route::get('/profil', [PemerintahController::class, 'profil']);
+        Route::put('/profil', [PemerintahController::class, 'updateProfil']);
+        Route::get('/statistik-wilayah', [PemerintahController::class, 'statistikWilayah']);
     });
 });

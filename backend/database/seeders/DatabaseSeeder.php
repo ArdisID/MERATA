@@ -11,13 +11,13 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Seed the application's database.
-     * Order matters: Users → Sekolah → Guru → Kelas → Siswa → Fasilitas → Materi → Kebutuhan → Bantuan
+     * Order matters: Sekolah → Users → Guru → Kelas & Jadwal → Siswa → Fasilitas → Materi → Kebutuhan → Bantuan
      */
     public function run(): void
     {
         $this->call([
-            UserSeeder::class,
             SekolahSeeder::class,
+            UserSeeder::class,
             GuruSeeder::class,
             KelasJadwalSeeder::class,
             SiswaSeeder::class,

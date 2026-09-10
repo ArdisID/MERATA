@@ -15,8 +15,18 @@ class Sekolah extends Model
         'kode_pos', 'telepon', 'email', 'website', 'kurikulum',
         'total_siswa', 'trend_siswa', 'total_guru', 'trend_guru',
         'total_kelas', 'trend_kelas', 'tingkat_kehadiran', 'trend_kehadiran',
-        'lab_komputer', 'lab_ipa',
+        'lab_komputer', 'lab_ipa', 'foto',
     ];
+
+    public function admins()
+    {
+        return $this->hasMany(User::class)->where('role', 'admin');
+    }
+
+    public function admin()
+    {
+        return $this->hasOne(User::class)->where('role', 'admin');
+    }
 
     public function gurus()
     {

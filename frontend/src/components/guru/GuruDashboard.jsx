@@ -35,10 +35,10 @@ export default function GuruDashboard({
           <div className="space-y-1.5 max-w-xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-blue-200 text-xs font-semibold">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Portal Pembelajaran Guru • Kurikulum Merdeka</span>
+              <span>{teacherProfile?.sekolah || 'Portal Pembelajaran Guru'} • {teacherProfile?.mapel || 'Kurikulum Merdeka'}</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-              Selamat Mengajar, {teacherProfile?.nama?.split(',')[0] || 'Pak Budi'}! 👨‍🏫
+              Selamat Mengajar, {teacherProfile?.nama?.split(',')[0] || 'Bapak/Ibu Guru'}! 👨‍🏫
             </h1>
             <p className="text-slate-300 text-xs sm:text-sm leading-relaxed font-normal">
               Hari ini Anda memiliki <strong className="text-white font-semibold">3 sesi mengajar</strong> aktif. Siapkan modul pembelajaran digital dan game edukasi untuk ruang kelas.

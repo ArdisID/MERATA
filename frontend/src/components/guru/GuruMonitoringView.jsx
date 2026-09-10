@@ -22,7 +22,8 @@ import api from '../../services/api';
 export default function GuruMonitoringView({
   students,
   setStudents,
-  globalSearch = ''
+  globalSearch = '',
+  teacherProfile = {}
 }) {
   const [filterClass, setFilterClass] = useState('all');
   const [filterAttention, setFilterAttention] = useState('all');
@@ -30,13 +31,15 @@ export default function GuruMonitoringView({
   const [editForm, setEditForm] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
 
-  // Filter students
+  // Dynamic classes from the loaded students
+  const dynamicClasses = Array.from(new Set(students.map((s) => s.kelas).filter(Boolean)));
+
   const filteredStudents = students.filter((s) => {
     const matchSearch =
       s.nama.toLowerCase().includes(globalSearch.toLowerCase()) ||
       s.nisn.includes(globalSearch) ||
-      s.kelas.toLowerCase().includes(globalSearch.toLowerCase());
-    const matchClass = filterClass === 'all' || s.kelas.startsWith(filterClass);
+      (s.kelas && s.kelas.toLowerCase().includes(globalSearch.toLowerCase()));
+    const matchClass = filterClass === 'all' || s.kelas === filterClass;
     const matchAtt =
       filterAttention === 'all' ||
       (filterAttention === 'attention' && s.statusKehadiran === 'Perhatian Khusus') ||
@@ -44,11 +47,11 @@ export default function GuruMonitoringView({
     return matchSearch && matchClass && matchAtt;
   });
 
-  // Calculate Metrics
+  // Calculate Metrics (based on loaded students)
   const totalSiswa = students.length;
-  const avgKehadiran = (students.reduce((acc, s) => acc + s.kehadiran, 0) / totalSiswa).toFixed(1);
+  const avgKehadiran = totalSiswa > 0 ? (students.reduce((acc, s) => acc + s.kehadiran, 0) / totalSiswa).toFixed(1) : '0.0';
   const totalPerluPerhatian = students.filter((s) => s.statusKehadiran === 'Perhatian Khusus').length;
-  const avgNilai = (students.reduce((acc, s) => acc + s.nilaiRataRata, 0) / totalSiswa).toFixed(1);
+  const avgNilai = totalSiswa > 0 ? (students.reduce((acc, s) => acc + s.nilaiRataRata, 0) / totalSiswa).toFixed(1) : '0.0';
 
   // Open Detail & Edit Modal directly in editable state
   const handleOpenDetail = (student) => {
@@ -116,10 +119,10 @@ export default function GuruMonitoringView({
     ];
     printFormattedReport(
       'Laporan Hasil Belajar & Monitoring Perkembangan Siswa',
-      'SMP Negeri 1 Merata • Tahun Ajaran 2026/2027 Semester Genap',
+      `${teacherProfile?.sekolah || 'Nama Sekolah'} • Tahun Ajaran 2026/2027 Semester Genap`,
       headers,
       filteredStudents,
-      `Tingkat kehadiran rata-rata kelas ${avgKehadiran}%, dengan ${totalPerluPerhatian} siswa dalam pemantauan khusus guru BK.`
+      `Tingkat kehadiran rata-rata kelas ${avgKehadiran}%, dengan ${totalPerluPerhatian} siswa dalam pemantauan khusus guru.`
     );
   };
 
@@ -210,9 +213,11 @@ export default function GuruMonitoringView({
               className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
             >
               <option value="all">Semua Kelas</option>
-              <option value="7">Kelas 7</option>
-              <option value="8">Kelas 8</option>
-              <option value="9">Kelas 9</option>
+              {dynamicClasses.map((k) => (
+                <option key={k} value={k}>
+                  Kelas {k}
+                </option>
+              ))}
             </select>
 
             <select

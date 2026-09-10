@@ -6,10 +6,12 @@
 export const adaptSiswa = (s) => ({
   id: s.kode || `SIS-${String(s.id).padStart(3, '0')}`,
   dbId: s.id,
+  sekolahId: s.sekolah_id,
+  sekolah_id: s.sekolah_id,
   nisn: s.nisn || '-',
   nama: s.nama,
   gender: s.gender || 'Laki-laki',
-  kelas: s.kelas_nama || (s.kelas ? s.kelas.nama : '7A'),
+  kelas: s.kelas_nama || (s.kelas ? (typeof s.kelas === 'object' ? s.kelas.nama : s.kelas) : '-'),
   kehadiran: Number(s.kehadiran) || 0,
   statusKehadiran: s.status_kehadiran || 'Hadir Normal',
   nilaiRataRata: Number(s.nilai_rata_rata) || 0,
@@ -17,7 +19,38 @@ export const adaptSiswa = (s) => ({
   bantuanBadge: s.bantuan_badge || 'bg-gray-50 text-gray-700 border-gray-200',
   kebutuhan: s.kebutuhan || '-',
   catatan: s.catatan || '',
+  asalSekolah: s.sekolah?.nama || s.asal_sekolah || s.asalSekolah || 'Satuan Pendidikan Wilayah',
   riwayatBantuan: Array.isArray(s.riwayat_bantuan) ? s.riwayat_bantuan : []
+});
+
+export const adaptMateri = (m) => ({
+  id: m.kode || `MAT-${m.id}`,
+  dbId: m.id,
+  kode: m.kode,
+  jenjang: m.jenjang || '',
+  kelas: m.kelas || '',
+  mapel: m.mapel || '',
+  topik: m.topik || '',
+  topikUtama: m.topik || '',
+  jumlahSubmateri: m.jumlah_submateri || (Array.isArray(m.submateris) ? m.submateris.length : 0),
+  author: m.author || 'Kemendikbudristek',
+  tanggalTerbit: m.tanggal_terbit || 'Agt 2026',
+  status: m.status || 'Terdistribusi',
+  badge: m.badge || 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  deskripsi: m.deskripsi || '',
+  submateri: Array.isArray(m.submateris) && m.submateris.length > 0 ? m.submateris.map((sub, idx) => ({
+    id: sub.id ? `sub-${sub.id}` : `sub-${idx + 1}`,
+    nomor: sub.nomor || (idx + 1),
+    judul: sub.judul || `Submateri ${idx + 1}`,
+    durasi: sub.durasi || '2 JP (70 Menit)',
+    tujuan: Array.isArray(sub.tujuan) ? sub.tujuan : [sub.judul || 'Pemahaman materi'],
+    materiUtama: sub.materi_utama || sub.materiUtama || '',
+    video: sub.video || null,
+    contohSoal: Array.isArray(sub.contoh_soal) ? sub.contoh_soal : (Array.isArray(sub.contohSoal) ? sub.contohSoal : []),
+    slides: Array.isArray(sub.slides) ? sub.slides : []
+  })) : (Array.isArray(m.submateri) ? m.submateri : []),
+  quizzes: Array.isArray(m.quizzes) ? m.quizzes : [],
+  gameDatasets: Array.isArray(m.game_datasets || m.gameDatasets) ? (m.game_datasets || m.gameDatasets) : []
 });
 
 export const adaptGuru = (g) => ({
@@ -74,23 +107,40 @@ export const adaptFasilitas = (f) => ({
   terakhirCek: f.terakhir_cek || '-'
 });
 
-export const adaptVerifikasi = (v) => ({
-  id: v.kode || `VRF-${String(v.id).padStart(3, '0')}`,
-  dbId: v.id,
-  judul: v.judul,
-  kategori: v.kategori,
-  pemohon: v.pemohon || 'Guru',
-  peranPemohon: v.peran_pemohon || 'Guru Mata Pelajaran',
-  tanggal: v.tanggal || 'Hari ini',
-  urgensi: v.urgensi || 'Sedang',
-  urgensiBadge: v.urgensi_badge || 'bg-amber-50 text-amber-700 border-amber-200',
-  estimasiBiaya: v.estimasi_biaya || v.biaya || 'Rp 0',
-  justifikasi: v.justifikasi || v.keterangan || '',
-  status: v.status || 'menunggu',
-  statusLabel: v.status_label || 'Menunggu Verifikasi',
-  catatanAdmin: v.catatan_admin || '',
-  lampiran: v.lampiran || ''
-});
+export const getStorageUrl = (url) => {
+  if (!url) return null;
+  if (typeof url !== 'string') return url;
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+    return url;
+  }
+  const clean = url.startsWith('/') ? url : `/${url}`;
+  return `http://127.0.0.1:8000${clean}`;
+};
+
+export const adaptVerifikasi = (v) => {
+  const rawUrl = v.bukti_url || v.buktiUrl || v.lampiran_url || v.lampiranUrl || null;
+  const storageUrl = getStorageUrl(rawUrl);
+
+  return {
+    id: v.kode || `VRF-${String(v.id).padStart(3, '0')}`,
+    dbId: v.id,
+    judul: v.judul,
+    kategori: v.kategori,
+    pemohon: v.pemohon || 'Guru',
+    peranPemohon: v.peran_pemohon || 'Guru Mata Pelajaran',
+    tanggal: v.tanggal || 'Hari ini',
+    urgensi: v.urgensi || 'Sedang',
+    urgensiBadge: v.urgensi_badge || 'bg-amber-50 text-amber-700 border-amber-200',
+    estimasiBiaya: v.estimasi_biaya || v.biaya || 'Rp 0',
+    justifikasi: v.justifikasi || v.keterangan || '',
+    status: v.status || 'menunggu',
+    statusLabel: v.status_label || 'Menunggu Verifikasi',
+    catatanAdmin: v.catatan_admin || '',
+    lampiran: v.lampiran || '',
+    buktiUrl: storageUrl,
+    lampiranUrl: storageUrl
+  };
+};
 
 export const adaptTeacherNeed = (tn) => {
   let badge = 'bg-amber-50 text-amber-700 border-amber-200';
@@ -99,6 +149,9 @@ export const adaptTeacherNeed = (tn) => {
   } else if (tn.status === 'ditolak') {
     badge = 'bg-rose-50 text-rose-700 border-rose-200';
   }
+
+  const rawUrl = tn.bukti_url || tn.buktiUrl || tn.lampiran_url || tn.lampiranUrl || null;
+  const storageUrl = getStorageUrl(rawUrl);
 
   return {
     id: tn.kode || `GUR-NEED-${String(tn.id).padStart(3, '0')}`,
@@ -109,7 +162,10 @@ export const adaptTeacherNeed = (tn) => {
     status: tn.status_label || tn.status || 'Menunggu Verifikasi Sekolah',
     badge: badge,
     estimasi: tn.estimasi_biaya || tn.biaya || 'Rp 0',
-    keterangan: tn.justifikasi || tn.keterangan || ''
+    keterangan: tn.justifikasi || tn.keterangan || '',
+    lampiran: tn.lampiran || '',
+    buktiUrl: storageUrl,
+    lampiranUrl: storageUrl
   };
 };
 
@@ -128,35 +184,61 @@ export const adaptShipment = (s) => ({
   penerima: s.penerima || 'Admin Sekolah'
 });
 
-export const adaptSchoolProfile = (sp, fallback) => {
+export const adaptSchoolProfile = (sp, fallback = {}) => {
   if (!sp) return fallback;
+  const fbStats = fallback?.stats || {};
   return {
-    nama: sp.nama || fallback.nama,
-    npsn: sp.npsn || fallback.npsn,
-    akreditasi: sp.akreditasi || fallback.akreditasi,
-    statusSekolah: sp.status_sekolah || fallback.statusSekolah,
-    jenjang: sp.jenjang || fallback.jenjang,
-    kepalaSekolah: sp.kepala_sekolah || fallback.kepalaSekolah,
-    nipKepsek: sp.nip_kepsek || fallback.nipKepsek,
-    operator: sp.operator || fallback.operator,
-    alamat: sp.alamat || fallback.alamat,
-    wilayah: sp.wilayah || fallback.wilayah,
-    kodePos: sp.kode_pos || fallback.kodePos,
-    telepon: sp.telepon || fallback.telepon,
-    email: sp.email || fallback.email,
-    website: sp.website || fallback.website,
-    kurikulum: sp.kurikulum || fallback.kurikulum,
+    id: sp.id || fallback.id || null,
+    nama: sp.nama || fallback.nama || '',
+    npsn: sp.npsn || fallback.npsn || '',
+    akreditasi: sp.akreditasi || fallback.akreditasi || 'A',
+    statusSekolah: sp.status_sekolah || fallback.statusSekolah || 'Negeri',
+    jenjang: sp.jenjang || fallback.jenjang || 'SMP',
+    kepalaSekolah: sp.kepala_sekolah || fallback.kepalaSekolah || '',
+    nipKepsek: sp.nip_kepsek || fallback.nipKepsek || '',
+    operator: sp.operator || fallback.operator || '',
+    alamat: sp.alamat || fallback.alamat || '',
+    wilayah: sp.wilayah || fallback.wilayah || '',
+    kodePos: sp.kode_pos || fallback.kodePos || '',
+    telepon: sp.telepon || fallback.telepon || '',
+    email: sp.email || fallback.email || '',
+    website: sp.website || fallback.website || '',
+    kurikulum: sp.kurikulum || fallback.kurikulum || 'Kurikulum Merdeka',
+    foto: sp.foto || fallback?.foto || 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=1200&auto=format&fit=crop',
     stats: {
-      totalSiswa: sp.total_siswa || fallback.stats.totalSiswa,
-      trendSiswa: fallback.stats.trendSiswa,
-      totalGuru: sp.total_guru || fallback.stats.totalGuru,
-      trendGuru: fallback.stats.trendGuru,
-      totalKelas: sp.total_kelas || fallback.stats.totalKelas,
-      trendKelas: fallback.stats.trendKelas,
-      tingkatKehadiran: sp.tingkat_kehadiran || fallback.stats.tingkatKehadiran,
-      trendKehadiran: fallback.stats.trendKehadiran,
-      labKomputer: fallback.stats.labKomputer,
-      labIPA: fallback.stats.labIPA
+      totalSiswa: sp.total_siswa ?? fbStats.totalSiswa ?? 0,
+      trendSiswa: sp.trend_siswa || fbStats.trendSiswa || 'Stabil',
+      totalGuru: sp.total_guru ?? fbStats.totalGuru ?? 0,
+      trendGuru: sp.trend_guru || fbStats.trendGuru || 'Stabil',
+      totalKelas: sp.total_kelas ?? fbStats.totalKelas ?? 0,
+      trendKelas: sp.trend_kelas || fbStats.trendKelas || 'Stabil',
+      tingkatKehadiran: sp.tingkat_kehadiran || fbStats.tingkatKehadiran || '100%',
+      trendKehadiran: sp.trend_kehadiran || fbStats.trendKehadiran || 'Stabil',
+      labKomputer: sp.lab_komputer ?? fbStats.labKomputer ?? 1,
+      labIPA: sp.lab_ipa ?? fbStats.labIPA ?? 1
     }
   };
 };
+
+export const adaptSekolah = (sch) => ({
+  id: sch.id,
+  npsn: sch.npsn || '20101111',
+  nama: sch.nama,
+  wilayah: sch.wilayah || 'DKI Jakarta',
+  akreditasi: sch.akreditasi || 'A',
+  totalSiswa: sch.total_siswa || (sch.siswas ? sch.siswas.length : 0),
+  totalGuru: sch.total_guru || (sch.gurus ? sch.gurus.length : 0),
+  kondisiFasilitas: sch.kondisi_fasilitas || sch.status_fasilitas || 'Baik',
+  statusPrioritas: sch.status_prioritas || (sch.kondisi_fasilitas === 'Rusak Berat' ? 'Prioritas 1 (Kritis)' : 'Standar'),
+  usulanTerbaru: sch.usulan_terbaru || 'Pengajuan Perangkat TIK & Sanitasi',
+  foto: sch.foto || 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=1200&auto=format&fit=crop',
+  admin: sch.admin ? {
+    id: sch.admin.id,
+    name: sch.admin.name,
+    email: sch.admin.email
+  } : (sch.admin_account ? {
+    id: sch.admin_account.id,
+    name: sch.admin_account.name,
+    email: sch.admin_account.email
+  } : null)
+});

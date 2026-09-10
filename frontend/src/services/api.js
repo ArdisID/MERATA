@@ -123,8 +123,10 @@ class ApiService {
   // ==================== GURU ====================
   guru = {
     getDashboard: () => this.request('/guru/dashboard'),
+    getKelas: () => this.request('/guru/kelas'),
     getKelasList: () => this.request('/guru/kelas'),
     getKelasDetail: (id) => this.request(`/guru/kelas/${id}`),
+    getMateri: () => this.request('/guru/materi'),
     getKelasMateri: (kode) => this.request(`/guru/kelas/${kode}/materi`),
     getKelasQuiz: (kode) => this.request(`/guru/kelas/${kode}/quiz`),
     getKelasGame: (kode) => this.request(`/guru/kelas/${kode}/game`),
@@ -182,6 +184,13 @@ class ApiService {
       method: 'DELETE'
     }),
     getKelas: () => this.request('/admin/kelas'),
+    createKelas: (payload) => this.request('/admin/kelas', {
+      method: 'POST',
+      body: payload
+    }),
+    deleteKelas: (id) => this.request(`/admin/kelas/${id}`, {
+      method: 'DELETE'
+    }),
     getFasilitas: () => this.request('/admin/fasilitas'),
     createFasilitas: (payload) => this.request('/admin/fasilitas', {
       method: 'POST',
@@ -230,6 +239,17 @@ class ApiService {
       method: 'POST',
       body: payload
     }),
+    updateMateri: (id, payload) => this.request(`/pemerintah/materi/${id}`, {
+      method: 'PUT',
+      body: payload
+    }),
+    deleteMateri: (id) => this.request(`/pemerintah/materi/${id}`, {
+      method: 'DELETE'
+    }),
+    createSubmateri: (materiId, payload) => this.request(`/pemerintah/materi/${materiId}/submateri`, {
+      method: 'POST',
+      body: payload
+    }),
     getKebutuhan: (params) => {
       const q = params ? `?${new URLSearchParams(params)}` : '';
       return this.request(`/pemerintah/kebutuhan${q}`);
@@ -243,7 +263,20 @@ class ApiService {
       body: payload
     }),
     getLaporan: () => this.request('/pemerintah/laporan'),
-    getProfil: () => this.request('/pemerintah/profil')
+    getProfil: () => this.request('/pemerintah/profil'),
+    updateProfil: (payload) => this.request('/pemerintah/profil', {
+      method: 'PUT',
+      body: payload
+    }),
+    getStatistikWilayah: () => this.request('/pemerintah/statistik-wilayah'),
+    createAdminSekolah: (sekolahId, payload) => this.request(`/pemerintah/sekolah/${sekolahId}/admin`, {
+      method: 'POST',
+      body: payload
+    }),
+    updateAdminSekolah: (sekolahId, payload) => this.request(`/pemerintah/sekolah/${sekolahId}/admin`, {
+      method: 'PUT',
+      body: payload
+    })
   };
 }
 

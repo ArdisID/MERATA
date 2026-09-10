@@ -8,7 +8,9 @@ use App\Models\Guru;
 use App\Models\Kelas;
 use App\Models\Sekolah;
 use App\Models\Siswa;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
@@ -18,8 +20,18 @@ class AdminController extends Controller
      */
     public function dashboard(Request $request)
     {
-        $sekolah = Sekolah::first(); // For now, single school
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id;
 
+        // Fallback: if admin has no sekolah_id yet, try linking via guru profile or use first school
+        if (!$sekolahId && $user->guru) {
+            $sekolahId = $user->guru->sekolah_id;
+        }
+        if (!$sekolahId) {
+            $sekolahId = Sekolah::value('id');
+        }
+
+        $sekolah = Sekolah::find($sekolahId);
         if (!$sekolah) {
             return response()->json(['message' => 'Data sekolah tidak ditemukan.'], 404);
         }
@@ -52,7 +64,10 @@ class AdminController extends Controller
      */
     public function siswaList(Request $request)
     {
-        $query = Siswa::query();
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+
+        $query = Siswa::where('sekolah_id', $sekolahId);
 
         if ($request->has('search')) {
             $search = $request->search;
@@ -67,12 +82,76 @@ class AdminController extends Controller
     }
 
     /**
+     * Store a new student.
+     * POST /api/admin/siswa
+     */
+    public function storeSiswa(Request $request)
+    {
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+
+        $request->validate([
+            'nama' => 'required|string|max:255',
+            'nisn' => 'required|string|max:30',
+            'gender' => 'nullable|string|in:Laki-laki,Perempuan',
+            'kelas' => 'nullable|string|max:50',
+            'status_bantuan' => 'nullable|string|max:100',
+            'kebutuhan' => 'nullable|string|max:255',
+            'catatan' => 'nullable|string',
+        ]);
+
+        $kelasNama = $request->kelas ?? $request->kelas_nama;
+
+        // Cek kelas berdasarkan sekolah tersebut
+        $kelasObj = Kelas::where('sekolah_id', $sekolahId)
+            ->where(function ($q) use ($kelasNama) {
+                $q->where('nama', $kelasNama)->orWhere('kode', $kelasNama);
+            })->first();
+
+        $sekolah = Sekolah::find($sekolahId);
+        $cleanSchName = $sekolah ? strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $sekolah->nama), 0, 5)) : 'SEK';
+        $count = Siswa::where('sekolah_id', $sekolahId)->count() + 1;
+        $kode = 'SIS-' . $cleanSchName . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+
+        $badgeFor = match ($request->status_bantuan) {
+            'Penerima KIP', 'Penerima KJP Plus', 'Penerima KJP / KIP' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            'Beasiswa Prestasi' => 'bg-blue-50 text-blue-700 border-blue-200',
+            default => 'bg-slate-50 text-slate-600 border-slate-200',
+        };
+
+        $siswa = Siswa::create([
+            'sekolah_id' => $sekolahId,
+            'kelas_id' => $kelasObj?->id,
+            'kode' => $kode,
+            'nisn' => $request->nisn,
+            'nama' => $request->nama,
+            'gender' => $request->gender ?? 'Laki-laki',
+            'kelas_nama' => $kelasObj?->nama ?? $kelasNama,
+            'kehadiran' => 100,
+            'status_kehadiran' => 'Baik',
+            'nilai_rata_rata' => 80.0,
+            'status_bantuan' => $request->status_bantuan ?? 'Belum Ada',
+            'bantuan_badge' => $badgeFor,
+            'kebutuhan' => $request->kebutuhan,
+            'catatan' => $request->catatan,
+        ]);
+
+        return response()->json([
+            'message' => 'Data siswa berhasil ditambahkan.',
+            'siswa' => $siswa,
+        ], 201);
+    }
+
+    /**
      * Update student data.
      * PUT /api/admin/siswa/{id}
      */
     public function updateSiswa(Request $request, $id)
     {
-        $siswa = Siswa::findOrFail($id);
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+
+        $siswa = Siswa::where('id', $id)->where('sekolah_id', $sekolahId)->firstOrFail();
         $siswa->update($request->only([
             'nama', 'gender', 'kelas_nama', 'kehadiran', 'status_kehadiran',
             'nilai_rata_rata', 'status_bantuan', 'kebutuhan', 'catatan',
@@ -91,7 +170,10 @@ class AdminController extends Controller
      */
     public function guruList(Request $request)
     {
-        $query = Guru::query();
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+
+        $query = Guru::where('sekolah_id', $sekolahId);
 
         if ($request->has('search')) {
             $search = $request->search;
@@ -111,9 +193,71 @@ class AdminController extends Controller
      */
     public function kelasList(Request $request)
     {
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+
         return response()->json(
-            Kelas::with('jadwals')->orderBy('tingkat')->orderBy('nama')->get()
+            Kelas::with('jadwals')->where('sekolah_id', $sekolahId)->orderBy('tingkat')->orderBy('nama')->get()
         );
+    }
+
+    /**
+     * Store new class (rombel).
+     * POST /api/admin/kelas
+     */
+    public function storeKelas(Request $request)
+    {
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+
+        $request->validate([
+            'nama' => 'required|string|max:100',
+            'tingkat' => 'nullable|string|max:20',
+            'ruang' => 'nullable|string|max:100',
+            'wali_kelas_nama' => 'nullable|string|max:255',
+            'wali_kelas_id' => 'nullable|integer',
+        ]);
+
+        $count = Kelas::where('sekolah_id', $sekolahId)->count() + 1;
+        $cleanName = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $request->nama));
+        $kode = 'KLS-' . substr($cleanName, 0, 8) . '-' . str_pad($count, 2, '0', STR_PAD_LEFT);
+
+        $kelas = Kelas::create([
+            'sekolah_id' => $sekolahId,
+            'kode' => $kode,
+            'nama' => $request->nama,
+            'tingkat' => $request->tingkat ?? '10',
+            'ruang' => $request->ruang ?? ('Ruang ' . $request->nama),
+            'wali_kelas_id' => $request->wali_kelas_id,
+            'wali_kelas_nama' => $request->wali_kelas_nama ?? '-',
+            'total_siswa' => 0,
+            'laki_laki' => 0,
+            'perempuan' => 0,
+            'kehadiran_rata' => '100%',
+            'status' => 'Aktif',
+        ]);
+
+        return response()->json([
+            'message' => 'Rombel kelas berhasil ditambahkan.',
+            'kelas' => $kelas,
+        ], 201);
+    }
+
+    /**
+     * Delete a class.
+     * DELETE /api/admin/kelas/{id}
+     */
+    public function destroyKelas(Request $request, $id)
+    {
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+
+        $kelas = Kelas::where('id', $id)->where('sekolah_id', $sekolahId)->firstOrFail();
+        $kelas->delete();
+
+        return response()->json([
+            'message' => 'Rombel kelas berhasil dihapus.',
+        ]);
     }
 
     /**
@@ -122,7 +266,10 @@ class AdminController extends Controller
      */
     public function fasilitasList(Request $request)
     {
-        return response()->json(Fasilitas::orderBy('nama')->get());
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+
+        return response()->json(Fasilitas::where('sekolah_id', $sekolahId)->orderBy('nama')->get());
     }
 
     /**
@@ -131,7 +278,10 @@ class AdminController extends Controller
      */
     public function updateFasilitas(Request $request, $id)
     {
-        $fasilitas = Fasilitas::findOrFail($id);
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+
+        $fasilitas = Fasilitas::where('id', $id)->where('sekolah_id', $sekolahId)->firstOrFail();
         $fasilitas->update($request->only([
             'nama', 'lokasi', 'kondisi', 'kondisi_badge',
             'jumlah_total', 'jumlah_baik', 'jumlah_rusak',
@@ -147,12 +297,13 @@ class AdminController extends Controller
     /**
      * DELETE /api/admin/fasilitas/{id}
      */
-    public function deleteFasilitas($id)
+    public function deleteFasilitas(Request $request, $id)
     {
-        $fasilitas = Fasilitas::find($id);
-        if ($fasilitas) {
-            $fasilitas->delete();
-        }
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+
+        $fasilitas = Fasilitas::where('id', $id)->where('sekolah_id', $sekolahId)->firstOrFail();
+        $fasilitas->delete();
 
         return response()->json([
             'message' => 'Fasilitas berhasil dihapus.',
@@ -170,12 +321,14 @@ class AdminController extends Controller
             'nisn' => 'required|string',
         ]);
 
-        $sekolah = Sekolah::first();
-        $count = Siswa::count() + 1;
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+        $sekolah = Sekolah::find($sekolahId);
+        $count = Siswa::where('sekolah_id', $sekolahId)->count() + 1;
         $kode = 'SIS-' . str_pad($count, 3, '0', STR_PAD_LEFT);
 
         $siswa = Siswa::create([
-            'sekolah_id' => $sekolah ? $sekolah->id : 1,
+            'sekolah_id' => $sekolahId,
             'kode' => $kode,
             'nisn' => $request->nisn,
             'nama' => $request->nama,
@@ -207,8 +360,9 @@ class AdminController extends Controller
             'nama' => 'required|string',
         ]);
 
-        $sekolah = Sekolah::first();
-        $count = Fasilitas::count() + 1;
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+        $count = Fasilitas::where('sekolah_id', $sekolahId)->count() + 1;
         $kode = 'FAS-' . str_pad($count, 3, '0', STR_PAD_LEFT);
 
         $badge = $request->kondisi === 'Baik'
@@ -216,7 +370,7 @@ class AdminController extends Controller
             : ($request->kondisi === 'Rusak Ringan' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-700 border-rose-200');
 
         $fasilitas = Fasilitas::create([
-            'sekolah_id' => $sekolah ? $sekolah->id : 1,
+            'sekolah_id' => $sekolahId,
             'kode' => $kode,
             'nama' => $request->nama,
             'lokasi' => $request->lokasi ?? 'Gedung Utama',
@@ -237,18 +391,20 @@ class AdminController extends Controller
     }
 
     /**
-     * Create a new teacher.
+     * Create a new teacher and create associated User account.
      * POST /api/admin/guru
      */
     public function storeGuru(Request $request)
     {
         $request->validate([
-            'nama' => 'required|string',
-            'mapel' => 'required|string',
+            'nama' => 'required|string|max:255',
+            'mapel' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
         ]);
 
-        $sekolah = Sekolah::first();
-        $count = Guru::count() + 1;
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+        $count = Guru::where('sekolah_id', $sekolahId)->count() + 1;
         $kode = 'GUR-' . str_pad($count, 3, '0', STR_PAD_LEFT);
 
         $kelasAjar = $request->kelas_ajar;
@@ -256,8 +412,38 @@ class AdminController extends Controller
             $kelasAjar = array_map('trim', explode(',', $kelasAjar));
         }
 
+        // Determine email for guru and user
+        $email = $request->email;
+        if (empty($email)) {
+            $nameClean = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode(' ', $request->nama)[0] ?? 'guru'));
+            $email = $nameClean . $count . '@merata.sch.id';
+        }
+
+        // Ensure email is unique in users table
+        $baseEmail = $email;
+        $suffix = 1;
+        while (User::where('email', $email)->exists()) {
+            $parts = explode('@', $baseEmail);
+            $email = $parts[0] . $suffix . '@' . ($parts[1] ?? 'merata.sch.id');
+            $suffix++;
+        }
+
+        $passwordRaw = $request->password ?: 'password';
+
+        // 1. Create User account in users table
+        $newUser = User::create([
+            'name' => $request->nama,
+            'email' => $email,
+            'password' => Hash::make($passwordRaw),
+            'role' => 'guru',
+            'sekolah_id' => $sekolahId,
+            'avatar' => $request->avatar ?: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+        ]);
+
+        // 2. Create Guru record linked to user_id
         $guru = Guru::create([
-            'sekolah_id' => $sekolah ? $sekolah->id : 1,
+            'user_id' => $newUser->id,
+            'sekolah_id' => $sekolahId,
             'kode' => $kode,
             'nip' => $request->nip ?? '-',
             'nama' => $request->nama,
@@ -271,23 +457,39 @@ class AdminController extends Controller
             'lama_mengajar' => $request->lama_mengajar ?? '1 Tahun',
             'poin_kontribusi' => 0,
             'telepon' => $request->telepon ?? '08123456789',
-            'email' => $request->email ?? ('guru' . $count . '@merata.sch.id'),
+            'email' => $email,
+            'avatar' => $newUser->avatar,
             'kebutuhan' => $request->kebutuhan ?? '-',
         ]);
 
         return response()->json([
-            'message' => 'Data guru berhasil ditambahkan.',
+            'message' => 'Data guru dan akun login pengguna (users) berhasil ditambahkan.',
             'guru' => $guru,
+            'user' => [
+                'id' => $newUser->id,
+                'name' => $newUser->name,
+                'email' => $newUser->email,
+                'role' => $newUser->role,
+            ],
+            'login_info' => [
+                'email' => $newUser->email,
+                'default_password' => $passwordRaw,
+            ]
         ], 201);
     }
 
     /**
-     * Update teacher data.
+     * Update teacher data and sync User account.
      * PUT /api/admin/guru/{id}
      */
     public function updateGuru(Request $request, $id)
     {
-        $guru = Guru::where('id', $id)->orWhere('kode', $id)->firstOrFail();
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+
+        $guru = Guru::where('sekolah_id', $sekolahId)->where(function ($q) use ($id) {
+            $q->where('id', $id)->orWhere('kode', $id);
+        })->firstOrFail();
 
         $data = $request->only([
             'nama', 'nip', 'gender', 'mapel', 'jabatan',
@@ -305,6 +507,43 @@ class AdminController extends Controller
 
         $guru->update($data);
 
+        // Sync with users table
+        if ($guru->user_id) {
+            $userRecord = User::find($guru->user_id);
+            if ($userRecord) {
+                $userUpdates = [];
+                if ($request->has('nama')) $userUpdates['name'] = $request->nama;
+                if ($request->has('email') && !empty($request->email)) {
+                    $emailExists = User::where('email', $request->email)->where('id', '!=', $userRecord->id)->exists();
+                    if (!$emailExists) {
+                        $userUpdates['email'] = $request->email;
+                    }
+                }
+                if ($request->has('password') && !empty($request->password)) {
+                    $userUpdates['password'] = Hash::make($request->password);
+                }
+                if (!empty($userUpdates)) {
+                    $userRecord->update($userUpdates);
+                }
+            }
+        } elseif (!empty($guru->email)) {
+            // If guru didn't have user_id yet, link or create user
+            $userRecord = User::where('email', $guru->email)->first();
+            if (!$userRecord) {
+                $userRecord = User::create([
+                    'name' => $guru->nama,
+                    'email' => $guru->email,
+                    'password' => Hash::make($request->password ?: 'password'),
+                    'role' => 'guru',
+                    'sekolah_id' => $sekolahId,
+                    'avatar' => $guru->avatar ?: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+                ]);
+            } else {
+                $userRecord->update(['sekolah_id' => $sekolahId]);
+            }
+            $guru->update(['user_id' => $userRecord->id]);
+        }
+
         return response()->json([
             'message' => 'Data guru berhasil diperbarui.',
             'guru' => $guru->fresh(),
@@ -312,16 +551,30 @@ class AdminController extends Controller
     }
 
     /**
-     * Delete teacher.
+     * Delete teacher and clean up linked User account.
      * DELETE /api/admin/guru/{id}
      */
-    public function deleteGuru($id)
+    public function deleteGuru(Request $request, $id)
     {
-        $guru = Guru::where('id', $id)->orWhere('kode', $id)->firstOrFail();
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+
+        $guru = Guru::where('sekolah_id', $sekolahId)->where(function ($q) use ($id) {
+            $q->where('id', $id)->orWhere('kode', $id);
+        })->firstOrFail();
+        $userId = $guru->user_id;
+
         $guru->delete();
 
+        if ($userId) {
+            $linkedUser = User::find($userId);
+            if ($linkedUser && $linkedUser->role === 'guru') {
+                $linkedUser->delete();
+            }
+        }
+
         return response()->json([
-            'message' => 'Data guru berhasil dihapus.',
+            'message' => 'Data guru dan akun pengguna berhasil dihapus.',
         ]);
     }
 
@@ -329,9 +582,14 @@ class AdminController extends Controller
      * Delete student.
      * DELETE /api/admin/siswa/{id}
      */
-    public function deleteSiswa($id)
+    public function deleteSiswa(Request $request, $id)
     {
-        $siswa = Siswa::where('id', $id)->orWhere('kode', $id)->firstOrFail();
+        $user = $request->user();
+        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+
+        $siswa = Siswa::where('sekolah_id', $sekolahId)->where(function ($q) use ($id) {
+            $q->where('id', $id)->orWhere('kode', $id);
+        })->firstOrFail();
         $siswa->delete();
 
         return response()->json([

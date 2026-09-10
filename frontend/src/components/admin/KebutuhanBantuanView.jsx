@@ -17,10 +17,13 @@ import {
   Info,
   Download,
   Printer,
-  X
+  X,
+  Camera,
+  ExternalLink
 } from 'lucide-react';
 import { printFormattedReport, printOfficialBASTReport, exportToCSV } from '../../utils/exportUtils';
 import api from '../../services/api';
+import { getStorageUrl } from '../../services/adapters';
 
 export default function KebutuhanBantuanView({
   verifications,
@@ -541,29 +544,57 @@ export default function KebutuhanBantuanView({
                 </div>
               </div>
 
-              {selectedVerification.lampiran && (
+              {(selectedVerification.lampiran || selectedVerification.lampiranUrl || selectedVerification.buktiUrl) && (
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
-                      <FileText className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold shrink-0">
+                      {(selectedVerification.lampiranUrl || selectedVerification.buktiUrl)?.match(/\.(jpg|jpeg|png|webp|gif)/i) || (selectedVerification.buktiUrl && !selectedVerification.lampiran?.endsWith('.pdf')) ? (
+                        <Camera className="w-4 h-4" />
+                      ) : (
+                        <FileText className="w-4 h-4" />
+                      )}
                     </div>
                     <div>
-                      <span className="font-semibold text-slate-800 block text-xs truncate max-w-[220px]">
-                        {selectedVerification.lampiran}
+                      <span className="font-semibold text-slate-800 block text-xs truncate max-w-[200px]">
+                        {selectedVerification.lampiran || 'Berkas Bukti Fisik / Dokumen'}
                       </span>
                       <span className="text-[10px] text-slate-400">Bukti Fisik / Dokumen Terlampir</span>
                     </div>
                   </div>
-                  {selectedVerification.lampiranUrl ? (
-                    <a
-                      href={selectedVerification.lampiranUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold transition-colors"
-                    >
-                      Lihat Berkas
-                    </a>
-                  ) : (
+                  {(selectedVerification.lampiranUrl || selectedVerification.buktiUrl) ? (() => {
+                    const rawFileUrl = selectedVerification.lampiranUrl || selectedVerification.buktiUrl;
+                    const finalFileUrl = getStorageUrl(rawFileUrl);
+                    const isImg = finalFileUrl?.match(/\.(jpg|jpeg|png|webp|gif)/i) || (selectedVerification.buktiUrl && !selectedVerification.lampiran?.endsWith('.pdf'));
+
+                    return (
+                      <div className="flex items-center gap-2">
+                        {isImg ? (
+                          <a
+                            href={finalFileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="relative block w-10 h-10 rounded-lg overflow-hidden border border-blue-200 hover:ring-2 hover:ring-blue-500 shadow-xs"
+                          >
+                            <img
+                              src={finalFileUrl}
+                              alt="Bukti Foto"
+                              className="w-full h-full object-cover"
+                            />
+                          </a>
+                        ) : (
+                          <a
+                            href={finalFileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold transition-colors inline-flex items-center gap-1"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            <span>Lihat Berkas</span>
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })() : (
                     <span className="text-[10px] text-slate-400 font-medium italic">Tervalidasi</span>
                   )}
                 </div>

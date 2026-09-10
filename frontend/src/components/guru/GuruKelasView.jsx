@@ -27,15 +27,64 @@ import GuruQuizView from './GuruQuizView';
 
 export default function GuruKelasView({
   setActiveTab,
-  students,
+  students = [],
   setStudents,
-  materials,
+  materials = [],
+  classes = [],
+  teacherProfile = {},
+  schoolProfile = {},
+  currentUser = {},
   globalSearch = '',
   initialMode = 'materi'
 }) {
-  const [selectedClass, setSelectedClass] = useState(mockGuruClasses[0]); // Default Kelas 5A
-  const [selectedTopicId, setSelectedTopicId] = useState('MAT-001');
-  const [selectedSubmateri, setSelectedSubmateri] = useState(mockPecahanMaterial.submateri[0]);
+  const activeClasses = classes && classes.length > 0 ? classes : mockGuruClasses;
+  const [selectedClass, setSelectedClass] = useState(activeClasses[0]);
+
+  // Update selected class when classes change
+  useEffect(() => {
+    if (classes && classes.length > 0) {
+      if (!selectedClass || !classes.some((c) => c.nama === selectedClass.nama || c.id === selectedClass.id)) {
+        setSelectedClass(classes[0]);
+      }
+    }
+  }, [classes]);
+
+  const [selectedTopicId, setSelectedTopicId] = useState(materials?.[0]?.id || 'MAT-001');
+
+  useEffect(() => {
+    if (materials && materials.length > 0) {
+      if (!selectedTopicId || !materials.some((m) => m.id === selectedTopicId || m.kode === selectedTopicId)) {
+        setSelectedTopicId(materials[0].id || materials[0].kode);
+      }
+    }
+  }, [materials]);
+
+  // Active Material Topic derived from materials or fallback
+  const activeMaterial = (materials && materials.length > 0
+    ? materials.find((m) => m.id === selectedTopicId || m.kode === selectedTopicId) || materials[0]
+    : null) || {
+    id: 'MAT-001',
+    topik: mockPecahanMaterial.topikUtama,
+    mapel: 'Matematika',
+    deskripsi: 'Memahami konsep dasar bagian dari keseluruhan, pecahan biasa, campuran, dan desimal.',
+    jumlahSubmateri: mockPecahanMaterial.submateri.length,
+    submateri: mockPecahanMaterial.submateri,
+  };
+
+  const activeSubmateris = (activeMaterial?.submateri && activeMaterial.submateri.length > 0)
+    ? activeMaterial.submateri
+    : mockPecahanMaterial.submateri;
+
+  const [selectedSubmateri, setSelectedSubmateri] = useState(activeSubmateris[0]);
+
+  useEffect(() => {
+    if (activeSubmateris && activeSubmateris.length > 0) {
+      if (!selectedSubmateri || !activeSubmateris.some((s) => s.id === selectedSubmateri.id)) {
+        setSelectedSubmateri(activeSubmateris[0]);
+      }
+    }
+  }, [activeSubmateris]);
+
   const [activeSection, setActiveSection] = useState(initialMode || 'materi'); // 'materi' | 'game' | 'quiz'
   const [activeContentTab, setActiveContentTab] = useState('materi'); // 'materi' | 'video' | 'soal' | 'slides'
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
@@ -53,21 +102,26 @@ export default function GuruKelasView({
   const [attendanceModalTab, setAttendanceModalTab] = useState('input'); // 'input' | 'history'
   const [selectedHistoryDate, setSelectedHistoryDate] = useState('2026-08-28');
 
-  // Active Material Topic
-  const activeMaterial = materials?.find((m) => m.id === selectedTopicId) || {
-    id: 'MAT-001',
-    topik: mockPecahanMaterial.topikUtama,
-    mapel: 'Matematika',
-    deskripsi: 'Memahami konsep dasar bagian dari keseluruhan, pecahan biasa, campuran, dan desimal.',
-    jumlahSubmateri: 5,
-  };
+  // Filtered Students: CEK DULU SEKOLAHNYA! Mencegah data siswa sekolah lain masuk jika nama kelas sama
+  const currentSchoolId =
+    teacherProfile?.sekolahId ||
+    currentUser?.sekolah_id ||
+    schoolProfile?.dbId ||
+    schoolProfile?.id;
 
-  // Filtered Students for this class
-  const classStudents = students.filter(
-    (s) =>
-      s.kelas === selectedClass.nama.replace('Kelas ', '') ||
-      s.kelas.startsWith(selectedClass.nama.replace('Kelas ', '').charAt(0))
-  );
+  const classCode = (selectedClass?.nama || '').replace('Kelas ', '').trim();
+  const classStudents = students.filter((s) => {
+    if (currentSchoolId && s.sekolahId && Number(s.sekolahId) !== Number(currentSchoolId)) {
+      return false;
+    }
+    const sKelas = (s.kelas || '').replace('Kelas ', '').trim();
+    return (
+      sKelas === classCode ||
+      s.kelas === selectedClass?.nama ||
+      s.kelas === classCode ||
+      (s.kelasId && selectedClass?.dbId && Number(s.kelasId) === Number(selectedClass.dbId))
+    );
+  });
 
   // Open Attendance Sheet
   const handleOpenAttendance = () => {
@@ -297,21 +351,52 @@ export default function GuruKelasView({
       {activeSection === 'materi' && (
         <div className="space-y-6">
           {/* Class Selector Tabs */}
-          <div className="flex items-center gap-2 border-b border-gray-200 pb-2 overflow-x-auto">
-            {mockGuruClasses.map((cls) => (
-              <button
-                key={cls.id}
-                onClick={() => setSelectedClass(cls)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                  selectedClass.id === cls.id
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                <BookOpen className="w-4 h-4" />
-                <span>{cls.nama} ({cls.mapel})</span>
-              </button>
-            ))}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200 pb-2">
+            <div className="flex items-center gap-2 overflow-x-auto">
+              {activeClasses.map((cls) => {
+                const isSelected = selectedClass?.id === cls.id || selectedClass?.nama === cls.nama;
+                return (
+                  <button
+                    key={cls.id || cls.dbId || cls.nama}
+                    onClick={() => setSelectedClass(cls)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                      isSelected
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    <span>{cls.nama} {cls.mapel ? `(${cls.mapel})` : ''}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Material Topic Selector (if multiple materials exist for this jenjang) */}
+            {materials && materials.length > 1 && (
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-gray-500 whitespace-nowrap">Materi:</span>
+                <select
+                  value={selectedTopicId}
+                  onChange={(e) => {
+                    const found = materials.find((m) => m.id === e.target.value || m.kode === e.target.value);
+                    if (found) {
+                      setSelectedTopicId(found.id || found.kode);
+                      if (found.submateri && found.submateri.length > 0) {
+                        setSelectedSubmateri(found.submateri[0]);
+                      }
+                    }
+                  }}
+                  className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer max-w-xs truncate"
+                >
+                  {materials.map((mat) => (
+                    <option key={mat.id || mat.kode} value={mat.id || mat.kode}>
+                      {mat.kode} - {mat.topik || mat.topikUtama} ({mat.kelas || mat.jenjang})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Main Grid: Submateri (4 Cols) & Interactive Content Viewer (8 Cols) */}
@@ -320,59 +405,55 @@ export default function GuruKelasView({
             <div className="lg:col-span-4 space-y-4">
               <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-3">
                 <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                  <h2 className="text-sm font-extrabold text-gray-900">Daftar Submateri Terstruktur</h2>
-                  <span className="text-[11px] font-bold text-blue-600">
-                    {activeMaterial.jumlahSubmateri || 5} Submateri
+                  <div>
+                    <h2 className="text-sm font-extrabold text-gray-900">Submateri Terstruktur</h2>
+                    <span className="text-[10px] text-gray-400 block font-medium">Jenjang: {activeMaterial.jenjang || schoolProfile?.jenjang || 'Kurikulum Merdeka'}</span>
+                  </div>
+                  <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+                    {activeSubmateris.length} Submateri
                   </span>
                 </div>
 
                 <div className="space-y-2">
-                  {mockPecahanMaterial.submateri.map((sub) => {
-                    const isSelected = selectedSubmateri.id === sub.id;
+                  {activeSubmateris.map((sub, idx) => {
+                    const isSelected = selectedSubmateri?.id === sub.id || (!selectedSubmateri && idx === 0);
                     return (
                       <div
-                        key={sub.id}
+                        key={sub.id || idx}
                         onClick={() => {
                           setSelectedSubmateri(sub);
                           setCurrentSlideIndex(0);
                         }}
-                        className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
+                        className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-2 ${
                           isSelected
-                            ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-500/20 shadow-xs'
-                            : 'bg-gray-50/70 border-gray-100 hover:bg-gray-100/70'
+                            ? 'bg-blue-50/70 border-blue-200 shadow-xs'
+                            : 'bg-white border-gray-100 hover:border-gray-200 hover:bg-gray-50/50'
                         }`}
                       >
-                        <div
-                          className={`w-7 h-7 rounded-lg flex items-center justify-center font-extrabold text-xs shrink-0 ${
-                            isSelected
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-white text-gray-700 border border-gray-200'
-                          }`}
-                        >
-                          {sub.nomor}
+                        <div className="space-y-1 min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                                isSelected ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
+                              }`}
+                            >
+                              {sub.nomor || (idx + 1)}
+                            </span>
+                            <h4 className="font-bold text-xs text-gray-900 truncate">
+                              {sub.judul}
+                            </h4>
+                          </div>
+                          <p className="text-[11px] text-gray-500 pl-7">{sub.durasi || '2 JP (70 Menit)'}</p>
                         </div>
 
-                    <div className="flex-1 min-w-0">
-                      <h3
-                        className={`text-xs font-bold leading-snug ${
-                          isSelected ? 'text-blue-900' : 'text-gray-900'
-                        }`}
-                      >
-                        {sub.judul}
-                      </h3>
-                      <span className="text-[10px] text-gray-400 mt-0.5 block">
-                        Durasi: {sub.durasi}
-                      </span>
-                    </div>
+                        {isSelected && <ChevronRight className="w-4 h-4 text-blue-600 shrink-0 self-center" />}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
 
-                    {isSelected && <ChevronRight className="w-4 h-4 text-blue-600 shrink-0 self-center" />}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Quick Roster of Students in Class */}
+              {/* Quick Roster of Students in Class */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-gray-100">
               <h3 className="text-xs font-bold text-gray-900">Presensi Siswa {selectedClass.nama}</h3>
@@ -502,31 +583,73 @@ export default function GuruKelasView({
             </div>
           )}
 
+
           {/* TAB 2: VIDEO */}
           {activeContentTab === 'video' && (
             <div className="space-y-3 text-xs">
-              <div className="relative rounded-2xl overflow-hidden shadow-md bg-black aspect-video flex items-center justify-center group cursor-pointer">
-                <img
-                  src={selectedSubmateri.video.thumbnail}
-                  alt="Video Thumbnail"
-                  className="w-full h-full object-cover opacity-80 group-hover:opacity-70 transition-opacity"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute flex flex-col items-center gap-2">
-                  <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
-                    <PlayCircle className="w-10 h-10" />
-                  </div>
-                  <span className="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-xs font-bold">
-                    Putar Video ({selectedSubmateri.video.durasi})
+              {/* PPT / Slide Download badge if available */}
+              {(selectedSubmateri.ppt_url || selectedSubmateri.pptUrl) && (
+                <a
+                  href={selectedSubmateri.ppt_url || selectedSubmateri.pptUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3.5 py-2 bg-orange-50 border border-orange-200 text-orange-800 rounded-xl font-bold text-[11px] hover:bg-orange-100 transition-colors"
+                >
+                  <FileText className="w-4 h-4 text-orange-600" />
+                  <span>
+                    Unduh Slide: {selectedSubmateri.ppt_filename || selectedSubmateri.pptFilename || 'Materi PPT / PDF'}
                   </span>
+                  <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                </a>
+              )}
+
+              {/* Real uploaded video — HTML5 player */}
+              {(selectedSubmateri.video_url || selectedSubmateri.videoUrl) ? (
+                <div className="rounded-2xl overflow-hidden shadow-md bg-black">
+                  <video
+                    controls
+                    className="w-full max-h-80 object-contain"
+                    src={selectedSubmateri.video_url || selectedSubmateri.videoUrl}
+                  >
+                    Browser Anda tidak mendukung pemutar video HTML5.
+                  </video>
+                  <div className="px-4 py-3 bg-gray-900 text-white">
+                    <p className="font-bold text-sm">{selectedSubmateri.judul}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Video Pembelajaran Diunggah • {selectedSubmateri.durasi}</p>
+                  </div>
                 </div>
-                <div className="absolute bottom-4 left-4 right-4 text-white">
-                  <h3 className="font-extrabold text-base">{selectedSubmateri.video.judul}</h3>
-                  <p className="text-xs text-gray-300 mt-0.5">{selectedSubmateri.video.deskripsiVideo}</p>
+              ) : selectedSubmateri.video ? (
+                /* Mock/thumbnail-based video preview */
+                <div className="relative rounded-2xl overflow-hidden shadow-md bg-black aspect-video flex items-center justify-center group cursor-pointer">
+                  <img
+                    src={selectedSubmateri.video.thumbnail}
+                    alt="Video Thumbnail"
+                    className="w-full h-full object-cover opacity-80 group-hover:opacity-70 transition-opacity"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  <div className="absolute flex flex-col items-center gap-2">
+                    <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+                      <PlayCircle className="w-10 h-10" />
+                    </div>
+                    <span className="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-xs font-bold">
+                      Putar Video ({selectedSubmateri.video.durasi})
+                    </span>
+                  </div>
+                  <div className="absolute bottom-4 left-4 right-4 text-white">
+                    <h3 className="font-extrabold text-base">{selectedSubmateri.video.judul}</h3>
+                    <p className="text-xs text-gray-300 mt-0.5">{selectedSubmateri.video.deskripsiVideo}</p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-gray-400 gap-3 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                  <Video className="w-10 h-10 opacity-40" />
+                  <p className="font-semibold text-sm">Belum ada video untuk submateri ini.</p>
+                  <p className="text-[11px] text-center max-w-xs">Pemerintah/Guru dapat mengunggah video pembelajaran melalui dashboard Materi Nasional.</p>
+                </div>
+              )}
             </div>
           )}
+
 
           {/* TAB 3: SOAL */}
           {activeContentTab === 'soal' && (
@@ -649,7 +772,11 @@ export default function GuruKelasView({
               ← Kembali ke Materi
             </button>
           </div>
-          <GuruQuizView students={students} setStudents={setStudents} />
+          <GuruQuizView
+            students={classStudents.length > 0 ? classStudents : students}
+            setStudents={setStudents}
+            activeClass={selectedClass}
+          />
         </div>
       )}
 
@@ -667,7 +794,7 @@ export default function GuruKelasView({
                     Lembar Presensi: {selectedClass.nama}
                   </h3>
                   <p className="text-xs text-gray-400">
-                    Kelola dan tinjau log kehadiran harian siswa
+                    Kelola dan tinjau log kehadiran harian siswa ({classStudents.length} siswa terdaftar)
                   </p>
                 </div>
               </div>
@@ -723,7 +850,8 @@ export default function GuruKelasView({
                   <button
                     type="button"
                     onClick={handleMarkAllPresent}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
+                    disabled={classStudents.length === 0}
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white rounded-lg font-bold text-xs shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
                   >
                     <Check className="w-3.5 h-3.5" />
                     <span>Tandai Semua Hadir</span>
@@ -732,18 +860,24 @@ export default function GuruKelasView({
 
                 {/* Student Attendance List */}
                 <div className="divide-y divide-gray-100 border border-gray-200 rounded-2xl overflow-hidden max-h-72 overflow-y-auto">
-                  {classStudents.map((siswa, idx) => {
-                    const currentStatus = attendanceRecords[siswa.id] || 'H';
+                  {classStudents.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400">
+                      <p className="font-semibold">Belum ada data siswa untuk {selectedClass.nama}.</p>
+                      <p className="text-[11px] mt-1">Pilih rombel lain (misal: 7A, 8A, 8B, 9A) pada pemilih kelas di atas.</p>
+                    </div>
+                  ) : (
+                    classStudents.map((siswa, idx) => {
+                      const currentStatus = attendanceRecords[siswa.id] || 'H';
 
-                    return (
-                      <div key={siswa.id} className="p-3 flex items-center justify-between hover:bg-gray-50/80 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <span className="w-6 text-gray-400 font-mono text-[11px] font-bold">#{idx + 1}</span>
-                          <div>
-                            <p className="font-extrabold text-gray-900">{siswa.nama}</p>
-                            <span className="text-[10px] text-gray-400">NISN: {siswa.nisn}</span>
+                      return (
+                        <div key={siswa.id} className="p-3 flex items-center justify-between hover:bg-gray-50/80 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <span className="w-6 text-gray-400 font-mono text-[11px] font-bold">#{idx + 1}</span>
+                            <div>
+                              <p className="font-extrabold text-gray-900">{siswa.nama}</p>
+                              <span className="text-[10px] text-gray-400">NISN: {siswa.nisn}</span>
+                            </div>
                           </div>
-                        </div>
 
                         {/* Radio Selection: H, I, S, A */}
                         <div className="flex items-center gap-1.5">
@@ -774,7 +908,7 @@ export default function GuruKelasView({
                         </div>
                       </div>
                     );
-                  })}
+                  }))}
                 </div>
 
                 {/* Information */}
