@@ -73,8 +73,8 @@ class AdminController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('nisn', 'like', "%{$search}%")
-                  ->orWhere('kelas_nama', 'like', "%{$search}%");
+                    ->orWhere('nisn', 'like', "%{$search}%")
+                    ->orWhere('kelas_nama', 'like', "%{$search}%");
             });
         }
 
@@ -85,62 +85,7 @@ class AdminController extends Controller
      * Store a new student.
      * POST /api/admin/siswa
      */
-    public function storeSiswa(Request $request)
-    {
-        $user = $request->user();
-        $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
 
-        $request->validate([
-            'nama' => 'required|string|max:255',
-            'nisn' => 'required|string|max:30',
-            'gender' => 'nullable|string|in:Laki-laki,Perempuan',
-            'kelas' => 'nullable|string|max:50',
-            'status_bantuan' => 'nullable|string|max:100',
-            'kebutuhan' => 'nullable|string|max:255',
-            'catatan' => 'nullable|string',
-        ]);
-
-        $kelasNama = $request->kelas ?? $request->kelas_nama;
-
-        // Cek kelas berdasarkan sekolah tersebut
-        $kelasObj = Kelas::where('sekolah_id', $sekolahId)
-            ->where(function ($q) use ($kelasNama) {
-                $q->where('nama', $kelasNama)->orWhere('kode', $kelasNama);
-            })->first();
-
-        $sekolah = Sekolah::find($sekolahId);
-        $cleanSchName = $sekolah ? strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $sekolah->nama), 0, 5)) : 'SEK';
-        $count = Siswa::where('sekolah_id', $sekolahId)->count() + 1;
-        $kode = 'SIS-' . $cleanSchName . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
-
-        $badgeFor = match ($request->status_bantuan) {
-            'Penerima KIP', 'Penerima KJP Plus', 'Penerima KJP / KIP' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
-            'Beasiswa Prestasi' => 'bg-blue-50 text-blue-700 border-blue-200',
-            default => 'bg-slate-50 text-slate-600 border-slate-200',
-        };
-
-        $siswa = Siswa::create([
-            'sekolah_id' => $sekolahId,
-            'kelas_id' => $kelasObj?->id,
-            'kode' => $kode,
-            'nisn' => $request->nisn,
-            'nama' => $request->nama,
-            'gender' => $request->gender ?? 'Laki-laki',
-            'kelas_nama' => $kelasObj?->nama ?? $kelasNama,
-            'kehadiran' => 100,
-            'status_kehadiran' => 'Baik',
-            'nilai_rata_rata' => 80.0,
-            'status_bantuan' => $request->status_bantuan ?? 'Belum Ada',
-            'bantuan_badge' => $badgeFor,
-            'kebutuhan' => $request->kebutuhan,
-            'catatan' => $request->catatan,
-        ]);
-
-        return response()->json([
-            'message' => 'Data siswa berhasil ditambahkan.',
-            'siswa' => $siswa,
-        ], 201);
-    }
 
     /**
      * Update student data.
@@ -153,8 +98,15 @@ class AdminController extends Controller
 
         $siswa = Siswa::where('id', $id)->where('sekolah_id', $sekolahId)->firstOrFail();
         $siswa->update($request->only([
-            'nama', 'gender', 'kelas_nama', 'kehadiran', 'status_kehadiran',
-            'nilai_rata_rata', 'status_bantuan', 'kebutuhan', 'catatan',
+            'nama',
+            'gender',
+            'kelas_nama',
+            'kehadiran',
+            'status_kehadiran',
+            'nilai_rata_rata',
+            'status_bantuan',
+            'kebutuhan',
+            'catatan',
             'riwayat_bantuan',
         ]));
 
@@ -179,8 +131,8 @@ class AdminController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('nip', 'like', "%{$search}%")
-                  ->orWhere('mapel', 'like', "%{$search}%");
+                    ->orWhere('nip', 'like', "%{$search}%")
+                    ->orWhere('mapel', 'like', "%{$search}%");
             });
         }
 
@@ -283,9 +235,16 @@ class AdminController extends Controller
 
         $fasilitas = Fasilitas::where('id', $id)->where('sekolah_id', $sekolahId)->firstOrFail();
         $fasilitas->update($request->only([
-            'nama', 'lokasi', 'kondisi', 'kondisi_badge',
-            'jumlah_total', 'jumlah_baik', 'jumlah_rusak',
-            'keterangan', 'kebutuhan_tambahan', 'terakhir_cek',
+            'nama',
+            'lokasi',
+            'kondisi',
+            'kondisi_badge',
+            'jumlah_total',
+            'jumlah_baik',
+            'jumlah_rusak',
+            'keterangan',
+            'kebutuhan_tambahan',
+            'terakhir_cek',
         ]));
 
         return response()->json([
@@ -309,46 +268,70 @@ class AdminController extends Controller
             'message' => 'Fasilitas berhasil dihapus.',
         ]);
     }
-
     /**
-     * Create a new student.
+     * Store a new student.
      * POST /api/admin/siswa
      */
     public function storeSiswa(Request $request)
     {
-        $request->validate([
-            'nama' => 'required|string',
-            'nisn' => 'required|string',
-        ]);
-
         $user = $request->user();
         $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? Sekolah::value('id'));
+
+        $request->validate([
+            'nama' => 'required|string|max:255',
+            'nisn' => 'required|string|max:30',
+            'gender' => 'nullable|string|in:Laki-laki,Perempuan',
+            'kelas' => 'nullable|string|max:50',
+            'status_bantuan' => 'nullable|string|max:100',
+            'kebutuhan' => 'nullable|string|max:255',
+            'catatan' => 'nullable|string',
+        ]);
+
+        $kelasNama = $request->kelas ?? $request->kelas_nama;
+
+        $kelasObj = Kelas::where('sekolah_id', $sekolahId)
+            ->where(function ($q) use ($kelasNama) {
+                $q->where('nama', $kelasNama)->orWhere('kode', $kelasNama);
+            })->first();
+
         $sekolah = Sekolah::find($sekolahId);
+        $cleanSchName = $sekolah ? strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $sekolah->nama), 0, 5)) : 'SEK';
         $count = Siswa::where('sekolah_id', $sekolahId)->count() + 1;
-        $kode = 'SIS-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+        $kode = 'SIS-' . $cleanSchName . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+
+        $badgeFor = match ($request->status_bantuan) {
+            'Penerima KIP', 'Penerima KJP Plus', 'Penerima KJP / KIP' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            'Beasiswa Prestasi' => 'bg-blue-50 text-blue-700 border-blue-200',
+            default => 'bg-slate-50 text-slate-600 border-slate-200',
+        };
 
         $siswa = Siswa::create([
             'sekolah_id' => $sekolahId,
+            'kelas_id' => $kelasObj?->id,
             'kode' => $kode,
             'nisn' => $request->nisn,
             'nama' => $request->nama,
             'gender' => $request->gender ?? 'Laki-laki',
-            'kelas_nama' => $request->kelas ?? '7A',
+            'kelas_nama' => $kelasObj?->nama ?? $kelasNama,
             'kehadiran' => 100,
             'status_kehadiran' => 'Baik',
             'nilai_rata_rata' => 80.0,
             'status_bantuan' => $request->status_bantuan ?? 'Belum Ada',
-            'bantuan_badge' => 'bg-gray-100 text-gray-700 border-gray-200',
+            'bantuan_badge' => $badgeFor,
             'kebutuhan' => $request->kebutuhan,
             'catatan' => $request->catatan,
             'riwayat_bantuan' => [],
         ]);
 
         return response()->json([
-            'message' => 'Siswa berhasil ditambahkan.',
+            'message' => 'Data siswa berhasil ditambahkan.',
             'siswa' => $siswa,
         ], 201);
     }
+    /**
+     * Create a new student.
+     * POST /api/admin/siswa
+     */
 
     /**
      * Create a new facility.
@@ -492,9 +475,18 @@ class AdminController extends Controller
         })->firstOrFail();
 
         $data = $request->only([
-            'nama', 'nip', 'gender', 'mapel', 'jabatan',
-            'status_kepegawaian', 'sertifikasi', 'pendidikan',
-            'lama_mengajar', 'telepon', 'email', 'kebutuhan'
+            'nama',
+            'nip',
+            'gender',
+            'mapel',
+            'jabatan',
+            'status_kepegawaian',
+            'sertifikasi',
+            'pendidikan',
+            'lama_mengajar',
+            'telepon',
+            'email',
+            'kebutuhan'
         ]);
 
         if ($request->has('kelas_ajar')) {
@@ -512,7 +504,8 @@ class AdminController extends Controller
             $userRecord = User::find($guru->user_id);
             if ($userRecord) {
                 $userUpdates = [];
-                if ($request->has('nama')) $userUpdates['name'] = $request->nama;
+                if ($request->has('nama'))
+                    $userUpdates['name'] = $request->nama;
                 if ($request->has('email') && !empty($request->email)) {
                     $emailExists = User::where('email', $request->email)->where('id', '!=', $userRecord->id)->exists();
                     if (!$emailExists) {
