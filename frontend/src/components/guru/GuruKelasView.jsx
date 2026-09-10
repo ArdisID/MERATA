@@ -49,19 +49,30 @@ export default function GuruKelasView({
     }
   }, [classes]);
 
-  const [selectedTopicId, setSelectedTopicId] = useState(materials?.[0]?.id || 'MAT-001');
+  // Filter materials strictly by the current school's jenjang
+  const schJenjang = (schoolProfile?.jenjang || '').toUpperCase();
+  const filteredMaterials = useMemo(() => {
+    if (!materials || materials.length === 0) return [];
+    if (!schJenjang) return materials;
+    return materials.filter((m) => {
+      const matJenjang = (m.jenjang || m.kelas || '').toUpperCase();
+      return matJenjang.includes(schJenjang) || schJenjang.includes(matJenjang.replace(/[^A-Z]/g, ''));
+    });
+  }, [materials, schJenjang]);
+
+  const [selectedTopicId, setSelectedTopicId] = useState(filteredMaterials?.[0]?.id || 'MAT-001');
 
   useEffect(() => {
-    if (materials && materials.length > 0) {
-      if (!selectedTopicId || !materials.some((m) => m.id === selectedTopicId || m.kode === selectedTopicId)) {
-        setSelectedTopicId(materials[0].id || materials[0].kode);
+    if (filteredMaterials && filteredMaterials.length > 0) {
+      if (!selectedTopicId || !filteredMaterials.some((m) => m.id === selectedTopicId || m.kode === selectedTopicId)) {
+        setSelectedTopicId(filteredMaterials[0].id || filteredMaterials[0].kode);
       }
     }
-  }, [materials]);
+  }, [filteredMaterials]);
 
-  // Active Material Topic derived from materials or fallback
-  const activeMaterial = (materials && materials.length > 0
-    ? materials.find((m) => m.id === selectedTopicId || m.kode === selectedTopicId) || materials[0]
+  // Active Material Topic derived from filteredMaterials or fallback
+  const activeMaterial = (filteredMaterials && filteredMaterials.length > 0
+    ? filteredMaterials.find((m) => m.id === selectedTopicId || m.kode === selectedTopicId) || filteredMaterials[0]
     : null) || {
     id: 'MAT-001',
     topik: mockPecahanMaterial.topikUtama,
@@ -284,7 +295,7 @@ export default function GuruKelasView({
               onChange={(e) => setSelectedTopicId(e.target.value)}
               className="bg-white border border-gray-300 rounded-lg px-2.5 py-1 font-bold text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
-              {(materials || []).map((m) => (
+              {(filteredMaterials || []).map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.mapel}: {m.topik} ({m.kelas})
                 </option>
@@ -373,13 +384,13 @@ export default function GuruKelasView({
             </div>
 
             {/* Material Topic Selector (if multiple materials exist for this jenjang) */}
-            {materials && materials.length > 1 && (
+            {filteredMaterials && filteredMaterials.length > 1 && (
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold text-gray-500 whitespace-nowrap">Materi:</span>
                 <select
                   value={selectedTopicId}
                   onChange={(e) => {
-                    const found = materials.find((m) => m.id === e.target.value || m.kode === e.target.value);
+                    const found = filteredMaterials.find((m) => m.id === e.target.value || m.kode === e.target.value);
                     if (found) {
                       setSelectedTopicId(found.id || found.kode);
                       if (found.submateri && found.submateri.length > 0) {
@@ -389,7 +400,7 @@ export default function GuruKelasView({
                   }}
                   className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer max-w-xs truncate"
                 >
-                  {materials.map((mat) => (
+                  {filteredMaterials.map((mat) => (
                     <option key={mat.id || mat.kode} value={mat.id || mat.kode}>
                       {mat.kode} - {mat.topik || mat.topikUtama} ({mat.kelas || mat.jenjang})
                     </option>
@@ -752,7 +763,7 @@ export default function GuruKelasView({
               ← Kembali ke Materi
             </button>
           </div>
-          <GuruGameView />
+          <GuruGameView activeMaterial={activeMaterial} />
         </div>
       )}
 
@@ -776,6 +787,7 @@ export default function GuruKelasView({
             students={classStudents.length > 0 ? classStudents : students}
             setStudents={setStudents}
             activeClass={selectedClass}
+            activeMaterial={activeMaterial}
           />
         </div>
       )}
