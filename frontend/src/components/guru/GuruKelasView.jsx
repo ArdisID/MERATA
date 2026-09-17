@@ -18,7 +18,8 @@ import {
   AlertTriangle,
   FileCheck,
   X,
-  Layers
+  Layers,
+  ExternalLink
 } from 'lucide-react';
 import { mockGuruClasses, mockPecahanMaterial } from '../../data/mockGuruData';
 import api from '../../services/api';
@@ -496,250 +497,275 @@ export default function GuruKelasView({
 
         {/* Right Interactive Content Area */}
         <div className="lg:col-span-8 bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-5">
-          {/* Submateri Header */}
-          <div className="pb-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <span className="text-xs font-bold text-blue-600">Topik: {activeMaterial.topik}</span>
-              <h2 className="text-xl font-extrabold text-gray-900 mt-0.5">
-                Submateri #{selectedSubmateri.nomor}: {selectedSubmateri.judul}
-              </h2>
-            </div>
-
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Kurikulum Merdeka Mandiri</span>
-            </div>
-          </div>
-
-          {/* Content Sub-Tabs */}
-          <div className="flex items-center gap-1.5 border-b border-gray-100 pb-2 overflow-x-auto">
-            <button
-              onClick={() => setActiveContentTab('materi')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeContentTab === 'materi'
-                  ? 'bg-blue-50 text-blue-600 shadow-xs'
-                  : 'text-gray-500 hover:bg-gray-100'
-              }`}
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>Materi & Tujuan</span>
-            </button>
-
-            <button
-              onClick={() => setActiveContentTab('video')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeContentTab === 'video'
-                  ? 'bg-blue-50 text-blue-600 shadow-xs'
-                  : 'text-gray-500 hover:bg-gray-100'
-              }`}
-            >
-              <Video className="w-3.5 h-3.5" />
-              <span>Video Pembelajaran</span>
-            </button>
-
-            <button
-              onClick={() => setActiveContentTab('soal')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeContentTab === 'soal'
-                  ? 'bg-blue-50 text-blue-600 shadow-xs'
-                  : 'text-gray-500 hover:bg-gray-100'
-              }`}
-            >
-              <HelpCircle className="w-3.5 h-3.5" />
-              <span>Contoh Soal</span>
-            </button>
-
-            <button
-              onClick={() => setActiveContentTab('slides')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeContentTab === 'slides'
-                  ? 'bg-blue-50 text-blue-600 shadow-xs'
-                  : 'text-gray-500 hover:bg-gray-100'
-              }`}
-            >
-              <Presentation className="w-3.5 h-3.5" />
-              <span>Slide Presentasi</span>
-            </button>
-          </div>
-
-          {/* TAB 1: MATERI */}
-          {activeContentTab === 'materi' && (
-            <div className="space-y-4 text-xs">
-              <div className="p-4 bg-blue-50/60 rounded-xl border border-blue-100 space-y-1.5">
-                <h3 className="font-extrabold text-blue-900 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                  Tujuan Pembelajaran:
-                </h3>
-                <ul className="list-disc list-inside space-y-1 text-blue-950 font-medium pl-1">
-                  {selectedSubmateri.tujuan.map((t, i) => (
-                    <li key={i}>{t}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="p-4 bg-gray-50 rounded-xl space-y-2 leading-relaxed text-gray-800 whitespace-pre-line font-medium border border-gray-100">
-                <h3 className="font-extrabold text-gray-900 text-sm">Penjelasan Konsep Utama</h3>
-                {selectedSubmateri.materiUtama}
-              </div>
-
-              <div className="p-4 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl border border-indigo-100 flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl bg-blue-600 text-white flex items-center justify-center font-extrabold text-lg shadow-sm">
-                  1/4
-                </div>
+          {selectedSubmateri ? (
+            <>
+              {/* Submateri Header */}
+              <div className="pb-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <span className="font-extrabold text-gray-900 block">{selectedSubmateri.ilustrasi.label}</span>
-                  <p className="text-gray-500 mt-0.5">{selectedSubmateri.ilustrasi.caption}</p>
+                  <span className="text-xs font-bold text-blue-600">Topik: {activeMaterial.topik}</span>
+                  <h2 className="text-xl font-extrabold text-gray-900 mt-0.5">
+                    Submateri #{selectedSubmateri.nomor || 1}: {selectedSubmateri.judul}
+                  </h2>
+                </div>
+
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Kurikulum Merdeka Mandiri</span>
                 </div>
               </div>
-            </div>
-          )}
 
-
-          {/* TAB 2: VIDEO */}
-          {activeContentTab === 'video' && (
-            <div className="space-y-3 text-xs">
-              {/* PPT / Slide Download badge if available */}
-              {(selectedSubmateri.ppt_url || selectedSubmateri.pptUrl) && (
-                <a
-                  href={selectedSubmateri.ppt_url || selectedSubmateri.pptUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-3.5 py-2 bg-orange-50 border border-orange-200 text-orange-800 rounded-xl font-bold text-[11px] hover:bg-orange-100 transition-colors"
+              {/* Content Sub-Tabs */}
+              <div className="flex items-center gap-1.5 border-b border-gray-100 pb-2 overflow-x-auto">
+                <button
+                  onClick={() => setActiveContentTab('materi')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    activeContentTab === 'materi'
+                      ? 'bg-blue-50 text-blue-600 shadow-xs'
+                      : 'text-gray-500 hover:bg-gray-100'
+                  }`}
                 >
-                  <FileText className="w-4 h-4 text-orange-600" />
-                  <span>
-                    Unduh Slide: {selectedSubmateri.ppt_filename || selectedSubmateri.pptFilename || 'Materi PPT / PDF'}
-                  </span>
-                  <ExternalLink className="w-3.5 h-3.5 opacity-60" />
-                </a>
-              )}
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Materi & Tujuan</span>
+                </button>
 
-              {/* Real uploaded video — HTML5 player */}
-              {(selectedSubmateri.video_url || selectedSubmateri.videoUrl) ? (
-                <div className="rounded-2xl overflow-hidden shadow-md bg-black">
-                  <video
-                    controls
-                    className="w-full max-h-80 object-contain"
-                    src={selectedSubmateri.video_url || selectedSubmateri.videoUrl}
-                  >
-                    Browser Anda tidak mendukung pemutar video HTML5.
-                  </video>
-                  <div className="px-4 py-3 bg-gray-900 text-white">
-                    <p className="font-bold text-sm">{selectedSubmateri.judul}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Video Pembelajaran Diunggah • {selectedSubmateri.durasi}</p>
-                  </div>
-                </div>
-              ) : selectedSubmateri.video ? (
-                /* Mock/thumbnail-based video preview */
-                <div className="relative rounded-2xl overflow-hidden shadow-md bg-black aspect-video flex items-center justify-center group cursor-pointer">
-                  <img
-                    src={selectedSubmateri.video.thumbnail}
-                    alt="Video Thumbnail"
-                    className="w-full h-full object-cover opacity-80 group-hover:opacity-70 transition-opacity"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute flex flex-col items-center gap-2">
-                    <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
-                      <PlayCircle className="w-10 h-10" />
+                <button
+                  onClick={() => setActiveContentTab('video')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    activeContentTab === 'video'
+                      ? 'bg-blue-50 text-blue-600 shadow-xs'
+                      : 'text-gray-500 hover:bg-gray-100'
+                  }`}
+                >
+                  <Video className="w-3.5 h-3.5" />
+                  <span>Video Pembelajaran</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveContentTab('soal')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    activeContentTab === 'soal'
+                      ? 'bg-blue-50 text-blue-600 shadow-xs'
+                      : 'text-gray-500 hover:bg-gray-100'
+                  }`}
+                >
+                  <HelpCircle className="w-3.5 h-3.5" />
+                  <span>Contoh Soal</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveContentTab('slides')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    activeContentTab === 'slides'
+                      ? 'bg-blue-50 text-blue-600 shadow-xs'
+                      : 'text-gray-500 hover:bg-gray-100'
+                  }`}
+                >
+                  <Presentation className="w-3.5 h-3.5" />
+                  <span>Slide Presentasi</span>
+                </button>
+              </div>
+
+              {/* TAB 1: MATERI */}
+              {activeContentTab === 'materi' && (
+                <div className="space-y-4 text-xs">
+                  {Array.isArray(selectedSubmateri.tujuan) && selectedSubmateri.tujuan.length > 0 && (
+                    <div className="p-4 bg-blue-50/60 rounded-xl border border-blue-100 space-y-1.5">
+                      <h3 className="font-extrabold text-blue-900 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                        Tujuan Pembelajaran:
+                      </h3>
+                      <ul className="list-disc list-inside space-y-1 text-blue-950 font-medium pl-1">
+                        {selectedSubmateri.tujuan.map((t, i) => (
+                          <li key={i}>{t}</li>
+                        ))}
+                      </ul>
                     </div>
-                    <span className="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-xs font-bold">
-                      Putar Video ({selectedSubmateri.video.durasi})
-                    </span>
+                  )}
+
+                  <div className="p-4 bg-gray-50 rounded-xl space-y-2 leading-relaxed text-gray-800 whitespace-pre-line font-medium border border-gray-100">
+                    <h3 className="font-extrabold text-gray-900 text-sm">Penjelasan Konsep Utama</h3>
+                    {selectedSubmateri.materiUtama || selectedSubmateri.deskripsi || 'Materi pembelajaran belum memiliki deskripsi teks.'}
                   </div>
-                  <div className="absolute bottom-4 left-4 right-4 text-white">
-                    <h3 className="font-extrabold text-base">{selectedSubmateri.video.judul}</h3>
-                    <p className="text-xs text-gray-300 mt-0.5">{selectedSubmateri.video.deskripsiVideo}</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-gray-400 gap-3 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                  <Video className="w-10 h-10 opacity-40" />
-                  <p className="font-semibold text-sm">Belum ada video untuk submateri ini.</p>
-                  <p className="text-[11px] text-center max-w-xs">Pemerintah/Guru dapat mengunggah video pembelajaran melalui dashboard Materi Nasional.</p>
+
+                  {selectedSubmateri.ilustrasi && (
+                    <div className="p-4 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl border border-indigo-100 flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-xl bg-blue-600 text-white flex items-center justify-center font-extrabold text-lg shadow-sm">
+                        {selectedSubmateri.ilustrasi.badge || '1/4'}
+                      </div>
+                      <div>
+                        <span className="font-extrabold text-gray-900 block">{selectedSubmateri.ilustrasi.label}</span>
+                        <p className="text-gray-500 mt-0.5">{selectedSubmateri.ilustrasi.caption}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
 
-
-          {/* TAB 3: SOAL */}
-          {activeContentTab === 'soal' && (
-            <div className="space-y-4 text-xs">
-              <h3 className="font-extrabold text-gray-900">Contoh Soal & Pembahasan Terbimbing</h3>
-              <div className="space-y-3">
-                {selectedSubmateri.contohSoal.map((cs, idx) => (
-                  <div key={idx} className="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
-                    <div className="flex items-start gap-2">
-                      <span className="px-2 py-0.5 bg-blue-600 text-white font-extrabold rounded text-[10px]">
-                        Soal #{idx + 1}
+              {/* TAB 2: VIDEO */}
+              {activeContentTab === 'video' && (
+                <div className="space-y-3 text-xs">
+                  {/* PPT / Slide Download badge if available */}
+                  {(selectedSubmateri.ppt_url || selectedSubmateri.pptUrl) && (
+                    <a
+                      href={selectedSubmateri.ppt_url || selectedSubmateri.pptUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-3.5 py-2 bg-orange-50 border border-orange-200 text-orange-800 rounded-xl font-bold text-[11px] hover:bg-orange-100 transition-colors"
+                    >
+                      <FileText className="w-4 h-4 text-orange-600" />
+                      <span>
+                        Unduh Slide: {selectedSubmateri.ppt_filename || selectedSubmateri.pptFilename || 'Materi PPT / PDF'}
                       </span>
-                      <strong className="text-gray-900 leading-snug">{cs.soal}</strong>
-                    </div>
+                      <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                    </a>
+                  )}
 
-                    <div className="p-3 bg-white rounded-lg border border-gray-100 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-emerald-700">Kunci Jawaban:</span>
-                        <span className="font-extrabold text-emerald-900 bg-emerald-50 px-2 py-0.5 rounded">
-                          {cs.jawaban}
+                  {/* Real uploaded video — HTML5 player */}
+                  {(selectedSubmateri.video_url || selectedSubmateri.videoUrl) ? (
+                    <div className="rounded-2xl overflow-hidden shadow-md bg-black">
+                      <video
+                        controls
+                        className="w-full max-h-80 object-contain"
+                        src={selectedSubmateri.video_url || selectedSubmateri.videoUrl}
+                      >
+                        Browser Anda tidak mendukung pemutar video HTML5.
+                      </video>
+                      <div className="px-4 py-3 bg-gray-900 text-white">
+                        <p className="font-bold text-sm">{selectedSubmateri.judul}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">Video Pembelajaran Diunggah • {selectedSubmateri.durasi}</p>
+                      </div>
+                    </div>
+                  ) : selectedSubmateri.video ? (
+                    /* Mock/thumbnail-based video preview */
+                    <div className="relative rounded-2xl overflow-hidden shadow-md bg-black aspect-video flex items-center justify-center group cursor-pointer">
+                      <img
+                        src={selectedSubmateri.video.thumbnail}
+                        alt="Video Thumbnail"
+                        className="w-full h-full object-cover opacity-80 group-hover:opacity-70 transition-opacity"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      <div className="absolute flex flex-col items-center gap-2">
+                        <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+                          <PlayCircle className="w-10 h-10" />
+                        </div>
+                        <span className="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-xs font-bold">
+                          Putar Video ({selectedSubmateri.video.durasi})
                         </span>
                       </div>
-                      <p className="text-gray-600 leading-relaxed pt-1">
-                        <strong>Pembahasan:</strong> {cs.pembahasan}
-                      </p>
+                      <div className="absolute bottom-4 left-4 right-4 text-white">
+                        <h3 className="font-extrabold text-base">{selectedSubmateri.video.judul}</h3>
+                        <p className="text-xs text-gray-300 mt-0.5">{selectedSubmateri.video.deskripsiVideo}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 4: SLIDES */}
-          {activeContentTab === 'slides' && (
-            <div className="space-y-4 text-xs">
-              <div className="p-8 bg-gradient-to-br from-slate-900 to-blue-950 text-white rounded-2xl shadow-md min-h-[220px] flex flex-col justify-between">
-                <div>
-                  <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1">
-                    Slide {currentSlideIndex + 1} dari {selectedSubmateri.slides.length}
-                  </span>
-                  <h3 className="text-xl font-extrabold text-white">
-                    {selectedSubmateri.slides[currentSlideIndex]?.judul}
-                  </h3>
-                  <p className="text-sm text-gray-300 mt-3 whitespace-pre-line leading-relaxed">
-                    {selectedSubmateri.slides[currentSlideIndex]?.konten}
-                  </p>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-gray-400 gap-3 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                      <Video className="w-10 h-10 opacity-40" />
+                      <p className="font-semibold text-sm">Belum ada video untuk submateri ini.</p>
+                      <p className="text-[11px] text-center max-w-xs">Pemerintah/Guru dapat mengunggah video pembelajaran melalui dashboard Materi Nasional.</p>
+                    </div>
+                  )}
                 </div>
+              )}
 
-                <div className="flex items-center justify-between pt-4 border-t border-white/10 mt-4">
-                  <button
-                    type="button"
-                    disabled={currentSlideIndex === 0}
-                    onClick={() => setCurrentSlideIndex((prev) => Math.max(0, prev - 1))}
-                    className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-xs disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    ← Slide Sebelumnya
-                  </button>
+              {/* TAB 3: SOAL */}
+              {activeContentTab === 'soal' && (
+                <div className="space-y-4 text-xs">
+                  <h3 className="font-extrabold text-gray-900">Contoh Soal & Pembahasan Terbimbing</h3>
+                  {Array.isArray(selectedSubmateri.contohSoal) && selectedSubmateri.contohSoal.length > 0 ? (
+                    <div className="space-y-3">
+                      {selectedSubmateri.contohSoal.map((cs, idx) => (
+                        <div key={idx} className="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
+                          <div className="flex items-start gap-2">
+                            <span className="px-2 py-0.5 bg-blue-600 text-white font-extrabold rounded text-[10px]">
+                              Soal #{idx + 1}
+                            </span>
+                            <strong className="text-gray-900 leading-snug">{cs.soal}</strong>
+                          </div>
 
-                  <div className="flex gap-1">
-                    {selectedSubmateri.slides.map((_, i) => (
-                      <div
-                        key={i}
-                        className={`w-2 h-2 rounded-full ${
-                          i === currentSlideIndex ? 'bg-blue-400 w-5' : 'bg-white/30'
-                        } transition-all`}
-                      />
-                    ))}
-                  </div>
-
-                  <button
-                    type="button"
-                    disabled={currentSlideIndex === selectedSubmateri.slides.length - 1}
-                    onClick={() => setCurrentSlideIndex((prev) => Math.min(selectedSubmateri.slides.length - 1, prev + 1))}
-                    className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    Slide Selanjutnya →
-                  </button>
+                          <div className="p-3 bg-white rounded-lg border border-gray-100 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-emerald-700">Kunci Jawaban:</span>
+                              <span className="font-extrabold text-emerald-900 bg-emerald-50 px-2 py-0.5 rounded">
+                                {cs.jawaban}
+                              </span>
+                            </div>
+                            <p className="text-gray-600 leading-relaxed pt-1">
+                              <strong>Pembahasan:</strong> {cs.pembahasan}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-8 bg-gray-50 border border-gray-200 rounded-2xl text-center text-gray-500">
+                      <p className="font-bold text-sm">Belum ada contoh soal untuk submateri ini.</p>
+                      <p className="text-xs text-gray-400 mt-1">Latihan soal dan kuis interaktif dapat diakses pada menu Quiz Interaktif.</p>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
+
+              {/* TAB 4: SLIDES */}
+              {activeContentTab === 'slides' && (
+                <div className="space-y-4 text-xs">
+                  {Array.isArray(selectedSubmateri.slides) && selectedSubmateri.slides.length > 0 ? (
+                    <div className="p-8 bg-gradient-to-br from-slate-900 to-blue-950 text-white rounded-2xl shadow-md min-h-[220px] flex flex-col justify-between">
+                      <div>
+                        <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1">
+                          Slide {currentSlideIndex + 1} dari {selectedSubmateri.slides.length}
+                        </span>
+                        <h3 className="text-xl font-extrabold text-white">
+                          {selectedSubmateri.slides[currentSlideIndex]?.judul}
+                        </h3>
+                        <p className="text-sm text-gray-300 mt-3 whitespace-pre-line leading-relaxed">
+                          {selectedSubmateri.slides[currentSlideIndex]?.konten}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-4 border-t border-white/10 mt-4">
+                        <button
+                          type="button"
+                          disabled={currentSlideIndex === 0}
+                          onClick={() => setCurrentSlideIndex((prev) => Math.max(0, prev - 1))}
+                          className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-xs disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          ← Slide Sebelumnya
+                        </button>
+
+                        <div className="flex gap-1">
+                          {selectedSubmateri.slides.map((_, i) => (
+                            <div
+                              key={i}
+                              className={`w-2 h-2 rounded-full ${
+                                i === currentSlideIndex ? 'bg-blue-400 w-5' : 'bg-white/30'
+                              } transition-all`}
+                            />
+                          ))}
+                        </div>
+
+                        <button
+                          type="button"
+                          disabled={currentSlideIndex === selectedSubmateri.slides.length - 1}
+                          onClick={() => setCurrentSlideIndex((prev) => Math.min(selectedSubmateri.slides.length - 1, prev + 1))}
+                          className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          Slide Selanjutnya →
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-8 bg-gray-50 border border-gray-200 rounded-2xl text-center text-gray-500">
+                      <p className="font-bold text-sm">Belum ada slide presentasi bawaan.</p>
+                      <p className="text-xs text-gray-400 mt-1">Periksa tab Video Pembelajaran untuk mengunduh slide/PPT dokumen jika telah diunggah.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-400 gap-3">
+              <BookOpen className="w-10 h-10 opacity-30" />
+              <p className="font-semibold text-sm">Pilih submateri dari daftar di sebelah kiri untuk melihat konten materi.</p>
             </div>
           )}
         </div>

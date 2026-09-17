@@ -43,11 +43,15 @@ export const adaptMateri = (m) => ({
     nomor: sub.nomor || (idx + 1),
     judul: sub.judul || `Submateri ${idx + 1}`,
     durasi: sub.durasi || '2 JP (70 Menit)',
-    tujuan: Array.isArray(sub.tujuan) ? sub.tujuan : [sub.judul || 'Pemahaman materi'],
+    tujuan: Array.isArray(sub.tujuan) ? sub.tujuan : (sub.tujuan ? [sub.tujuan] : [sub.judul || 'Pemahaman materi']),
     materiUtama: sub.materi_utama || sub.materiUtama || '',
     video: sub.video || null,
+    video_url: getStorageUrl(sub.video_url || sub.videoUrl || null),
+    ppt_url: getStorageUrl(sub.ppt_url || sub.pptUrl || null),
+    ppt_filename: sub.ppt_filename || sub.pptFilename || null,
     contohSoal: Array.isArray(sub.contoh_soal) ? sub.contoh_soal : (Array.isArray(sub.contohSoal) ? sub.contohSoal : []),
-    slides: Array.isArray(sub.slides) ? sub.slides : []
+    slides: Array.isArray(sub.slides) ? sub.slides : [],
+    ilustrasi: sub.ilustrasi || null
   })) : (Array.isArray(m.submateri) ? m.submateri : []),
   quizzes: Array.isArray(m.quizzes) ? m.quizzes : [],
   gameDatasets: Array.isArray(m.game_datasets || m.gameDatasets) ? (m.game_datasets || m.gameDatasets) : []
