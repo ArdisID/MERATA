@@ -7,6 +7,7 @@ use App\Models\Guru;
 use App\Models\Kebutuhan;
 use App\Models\Kelas;
 use App\Models\Materi;
+use App\Models\Sekolah;
 use App\Models\Siswa;
 use Illuminate\Http\Request;
 
