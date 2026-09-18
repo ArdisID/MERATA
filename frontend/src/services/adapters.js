@@ -130,9 +130,19 @@ export const adaptVerifikasi = (v) => {
   const rawUrl = v.bukti_url || v.buktiUrl || v.lampiran_url || v.lampiranUrl || null;
   const storageUrl = getStorageUrl(rawUrl);
 
+  // Determine tipe: 'guru' or 'siswa' from backend field or kategori heuristic
+  let tipe = v.tipe_pemohon || v.tipe || 'guru';
+  if (tipe === 'verifikasi' || tipe === 'kebutuhan_guru') tipe = 'guru';
+  else if (tipe === 'kebutuhan_siswa') tipe = 'siswa';
+  // Heuristic: if kategori contains 'Bantuan Siswa' or 'KIP', it's siswa
+  if (tipe === 'guru' && v.kategori && (v.kategori.includes('Bantuan Siswa') || v.kategori.includes('KIP'))) {
+    tipe = 'siswa';
+  }
+
   return {
     id: v.kode || `VRF-${String(v.id).padStart(3, '0')}`,
     dbId: v.id,
+    tipe,
     judul: v.judul,
     kategori: v.kategori,
     pemohon: v.pemohon || 'Guru',

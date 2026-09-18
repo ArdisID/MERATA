@@ -18,7 +18,8 @@ class KebutuhanController extends Controller
         $user = $request->user();
         $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? \App\Models\Sekolah::value('id'));
 
-        $query = Kebutuhan::where('tipe', 'verifikasi')->where('sekolah_id', $sekolahId);
+        $query = Kebutuhan::whereIn('tipe', ['verifikasi', 'kebutuhan_siswa'])
+            ->where('sekolah_id', $sekolahId);
 
         if ($request->has('status')) {
             $query->where('status', $request->status);
@@ -52,7 +53,8 @@ class KebutuhanController extends Controller
         $user = $request->user();
         $sekolahId = $user->sekolah_id ?? ($user->guru?->sekolah_id ?? \App\Models\Sekolah::value('id'));
 
-        $kebutuhan = Kebutuhan::where('tipe', 'verifikasi')->where('sekolah_id', $sekolahId)->findOrFail($id);
+        $kebutuhan = Kebutuhan::whereIn('tipe', ['verifikasi', 'kebutuhan_siswa'])
+            ->where('sekolah_id', $sekolahId)->findOrFail($id);
 
         $statusMap = [
             'setujui' => ['status' => 'disetujui_sekolah', 'label' => 'Disetujui Sekolah'],
