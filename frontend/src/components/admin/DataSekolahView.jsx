@@ -48,6 +48,7 @@ export default function DataSekolahView({
   const [deletingStudent, setDeletingStudent] = useState(null);
   const [maintenanceFacility, setMaintenanceFacility] = useState(null);
   const [deletingFacility, setDeletingFacility] = useState(null);
+  const [deletingClass, setDeletingClass] = useState(null);
   const [actionToast, setActionToast] = useState('');
 
   const showActionToast = (msg) => {
@@ -250,6 +251,21 @@ export default function DataSekolahView({
       api.admin.deleteGuru(teacherId).catch((e) => console.warn('Sync delete teacher:', e));
     } catch (e) {
       console.warn('Sync delete teacher:', e);
+    }
+  };
+
+  // Handle Delete Class
+  const handleDeleteClass = (classId) => {
+    setClasses(classes.filter((c) => c.id !== classId));
+    setDeletingClass(null);
+    if (selectedClass && selectedClass.id === classId) setSelectedClass(null);
+    showActionToast('Data rombel kelas berhasil dihapus.');
+    try {
+      // Backend expects DB id
+      const dbId = parseInt(String(classId).replace('KLS-', ''), 10) || classId;
+      api.admin.deleteKelas(dbId).catch((e) => console.warn('Sync delete class:', e));
+    } catch (e) {
+      console.warn('Sync delete class:', e);
     }
   };
 
@@ -1033,9 +1049,19 @@ export default function DataSekolahView({
                       <p className="text-[11px] text-gray-400">{kls.ruang}</p>
                     </div>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    {kls.status}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      {kls.status}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setDeletingClass(kls); }}
+                      className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                      title="Hapus Rombel"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-3 py-4 text-xs">
@@ -2407,6 +2433,40 @@ export default function DataSekolahView({
                 className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow-xs cursor-pointer"
               >
                 Ya, Hapus Fasilitas
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 11B. MODAL: KONFIRMASI HAPUS KELAS */}
+      {deletingClass && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col">
+            <div className="p-6 text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-extrabold text-gray-900">Hapus Rombel Kelas?</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Apakah Anda yakin ingin menghapus rombongan belajar <strong>"{deletingClass.nama}"</strong>? Seluruh jadwal dan data rombel terkait akan dihapus.
+              </p>
+            </div>
+
+            <div className="p-4 border-t border-gray-100 flex items-center justify-end gap-2 bg-gray-50">
+              <button
+                type="button"
+                onClick={() => setDeletingClass(null)}
+                className="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold rounded-xl text-xs cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteClass(deletingClass.id)}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow-xs cursor-pointer"
+              >
+                Ya, Hapus Rombel
               </button>
             </div>
           </div>
