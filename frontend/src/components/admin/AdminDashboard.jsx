@@ -45,13 +45,37 @@ export default function AdminDashboard({
   const pendingVerifications = (verifications || []).filter((v) => v.status === 'menunggu');
 
   // Alur Status Bantuan stages
+  const pengajuanCount = verifications?.length || 0;
+  const verifikasiCount = verifications?.filter(v => v.status === 'menunggu' || v.status === 'ditinjau')?.length || 0;
+  const disetujuiCount = verifications?.filter(v => v.status === 'disetujui')?.length || 0;
+  const dikirimCount = verifications?.filter(v => v.status === 'dikirim')?.length || 0;
+  const diterimaCount = verifications?.filter(v => v.status === 'diterima' || v.status === 'selesai')?.length || 0;
+
+  let currentStageIndex = 0;
+  if (diterimaCount > 0) currentStageIndex = 4;
+  else if (dikirimCount > 0) currentStageIndex = 3;
+  else if (disetujuiCount > 0) currentStageIndex = 2;
+  else if (verifikasiCount > 0) currentStageIndex = 1;
+  else if (pengajuanCount > 0) currentStageIndex = 0;
+
+  const getStatus = (idx) => {
+    if (pengajuanCount === 0) return 'pending';
+    if (currentStageIndex > idx) return 'completed';
+    if (currentStageIndex === idx) return 'current';
+    return 'pending';
+  };
+
   const bantuanStages = [
-    { id: 1, name: 'Pengajuan', icon: FileText, count: pendingVerifications?.length || 0, status: 'completed' },
-    { id: 2, name: 'Verifikasi', icon: FileCheck2, count: verifications?.filter(v => v.status === 'menunggu')?.length || 0, status: 'current' },
-    { id: 3, name: 'Disetujui', icon: PackageCheck, count: verifications?.filter(v => v.status === 'disetujui')?.length || 0, status: 'pending' },
-    { id: 4, name: 'Pengiriman', icon: Send, count: verifications?.filter(v => v.status === 'dikirim')?.length || 0, status: 'pending' },
-    { id: 5, name: 'Diterima', icon: Package, count: verifications?.filter(v => v.status === 'diterima')?.length || 0, status: 'pending' },
+    { id: 1, name: 'Pengajuan', icon: FileText, count: pengajuanCount, status: getStatus(0) },
+    { id: 2, name: 'Verifikasi', icon: FileCheck2, count: verifikasiCount, status: getStatus(1) },
+    { id: 3, name: 'Disetujui', icon: PackageCheck, count: disetujuiCount, status: getStatus(2) },
+    { id: 4, name: 'Pengiriman', icon: Send, count: dikirimCount, status: getStatus(3) },
+    { id: 5, name: 'Diterima', icon: Package, count: diterimaCount, status: getStatus(4) },
   ];
+
+  const totalUsulanAktif = verifications?.filter(v => v.status !== 'diterima' && v.status !== 'selesai' && v.status !== 'ditolak')?.length || 0;
+  const progressWidths = ['0%', '25%', '50%', '75%', '100%'];
+  const currentProgressWidth = pengajuanCount === 0 ? '0%' : progressWidths[currentStageIndex];
 
   // Perlu Perhatian list
   const attentionList = [
@@ -245,7 +269,10 @@ export default function AdminDashboard({
             <div className="py-7 px-2 overflow-x-auto">
               <div className="min-w-[540px] flex items-center justify-between relative">
                 <div className="absolute top-5 left-6 right-6 h-1 bg-slate-100 z-0">
-                  <div className="h-full bg-blue-600 w-1/2 rounded-full transition-all duration-700 ease-out" />
+                  <div 
+                    className="h-full bg-blue-600 rounded-full transition-all duration-700 ease-out" 
+                    style={{ width: currentProgressWidth }}
+                  />
                 </div>
 
                 {bantuanStages.map((stage) => {
@@ -295,7 +322,7 @@ export default function AdminDashboard({
           </div>
 
           <div className="mt-2 pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-500 gap-2 bg-slate-50/70 p-3 rounded-xl">
-            <span>💡 Total usulan aktif sedang diproses: <strong className="text-slate-800 font-semibold">365 Pengajuan</strong></span>
+            <span>💡 Total usulan aktif sedang diproses: <strong className="text-slate-800 font-semibold">{totalUsulanAktif} Pengajuan</strong></span>
             <span
               onClick={() => setActiveTab('kebutuhan-bantuan')}
               className="text-blue-600 font-medium cursor-pointer hover:underline"
