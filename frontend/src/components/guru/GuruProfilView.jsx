@@ -227,11 +227,12 @@ export default function GuruProfilView({
     // Also dispatch to Admin verifications queue if callback provided
     if (onAddNewNeed) {
       onAddNewNeed({
-        id: `VRF-00${Date.now().toString().slice(-2)}`,
+        id: `VRF-${Date.now().toString().slice(-6)}`,
+        tipe: 'guru',
         judul: newNeed.judul,
         kategori: newNeed.kategori,
         pemohon: teacherProfile.nama,
-        peranPemohon: teacherProfile.peran,
+        peranPemohon: teacherProfile.peran || teacherProfile.mapel || 'Guru',
         tanggal: 'Hari ini',
         urgensi: newNeed.urgensi,
         urgensiBadge: newNeed.urgensi === 'Mendesak' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-blue-50 text-blue-700 border-blue-200',

@@ -234,40 +234,11 @@ export default function App() {
   // ================= THE LIVE 3-ROLE ASSISTANCE LIFECYCLE LOOP =================
   
   // 1. Teacher submits a new need in Guru portal
-  const handleAddNewNeedFromGuru = async (newVerifItem) => {
-    // Optimistic local state update
-    setVerifications([newVerifItem, ...verifications]);
-    const teacherItem = {
-      id: `GUR-NEED-00${teacherNeeds.length + 1}`,
-      judul: newVerifItem.judul,
-      kategori: newVerifItem.kategori,
-      tanggal: 'Hari ini',
-      status: 'Menunggu Verifikasi Sekolah',
-      badge: 'bg-amber-50 text-amber-700 border-amber-200',
-      estimasi: newVerifItem.estimasiBiaya,
-      keterangan: newVerifItem.alasan || newVerifItem.justifikasi,
-    };
-    setTeacherNeeds([teacherItem, ...teacherNeeds]);
-
-    // Backend API Sync
-    try {
-      const res = await api.guru.createKebutuhan({
-        judul: newVerifItem.judul,
-        kategori: newVerifItem.kategori,
-        estimasi_biaya: newVerifItem.estimasiBiaya,
-        justifikasi: newVerifItem.alasan || newVerifItem.justifikasi,
-        lampiran: newVerifItem.lampiran,
-        bukti_url: newVerifItem.lampiranUrl || null,
-      });
-      if (res?.verifikasi) {
-        setVerifications((prev) => [
-          adaptVerifikasi(res.verifikasi),
-          ...prev.filter((v) => v.id !== newVerifItem.id)
-        ]);
-      }
-    } catch (err) {
-      console.warn('Backend sync for new need kept local:', err);
-    }
+  const handleAddNewNeedFromGuru = (newVerifItem) => {
+    // Optimistic local state update — tambahkan ke verifications admin dengan tipe 'guru'
+    const verifWithTipe = { ...newVerifItem, tipe: newVerifItem.tipe || 'guru' };
+    setVerifications((prev) => [verifWithTipe, ...prev]);
+    // NOTE: Backend sync dilakukan langsung di GuruProfilView.handleSubmit via api.guru.createKebutuhan
   };
 
   // 2. Government approves aid & allocates shipment
@@ -463,6 +434,7 @@ export default function App() {
               {guruActiveTab === 'profil' && (
                 <GuruProfilView
                   teacherProfile={teacherProfile}
+                  setTeacherProfile={setTeacherProfile}
                   teacherNeeds={teacherNeeds}
                   setTeacherNeeds={setTeacherNeeds}
                   onAddNewNeed={handleAddNewNeedFromGuru}
