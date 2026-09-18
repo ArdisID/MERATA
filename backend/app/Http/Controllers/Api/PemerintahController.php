@@ -49,7 +49,7 @@ class PemerintahController extends Controller
      */
     public function sekolahList(Request $request)
     {
-        $query = Sekolah::with('admin');
+        $query = Sekolah::with('admin')->withCount(['kelasList as total_kelas', 'siswas as total_siswa', 'gurus as total_guru']);
 
         if ($request->has('search')) {
             $search = $request->search;
@@ -101,7 +101,22 @@ class PemerintahController extends Controller
      */
     public function guruList(Request $request)
     {
-        return response()->json(Guru::with('sekolah')->orderBy('nama')->get());
+        $query = Guru::with('sekolah');
+
+        if ($request->has('sekolah_id') && $request->sekolah_id !== 'all') {
+            $query->where('sekolah_id', $request->sekolah_id);
+        }
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                    ->orWhere('nip', 'like', "%{$search}%")
+                    ->orWhere('mapel', 'like', "%{$search}%");
+            });
+        }
+
+        return response()->json($query->orderBy('nama')->get());
     }
 
     /**
@@ -110,8 +125,14 @@ class PemerintahController extends Controller
      */
     public function kelasList(Request $request)
     {
+        $query = Kelas::with(['jadwals', 'sekolah', 'wali']);
+
+        if ($request->has('sekolah_id') && $request->sekolah_id !== 'all') {
+            $query->where('sekolah_id', $request->sekolah_id);
+        }
+
         return response()->json(
-            Kelas::with(['jadwals', 'sekolah'])->orderBy('tingkat')->orderBy('nama')->get()
+            $query->orderBy('tingkat')->orderBy('nama')->get()
         );
     }
 
@@ -121,7 +142,13 @@ class PemerintahController extends Controller
      */
     public function fasilitasList(Request $request)
     {
-        return response()->json(Fasilitas::with('sekolah')->orderBy('nama')->get());
+        $query = Fasilitas::with('sekolah');
+
+        if ($request->has('sekolah_id') && $request->sekolah_id !== 'all') {
+            $query->where('sekolah_id', $request->sekolah_id);
+        }
+
+        return response()->json($query->orderBy('nama')->get());
     }
 
     /**

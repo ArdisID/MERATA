@@ -46,7 +46,7 @@ import {
 // All data comes from the real API — no mock imports
 import { exportToCSV, printFormattedReport } from '../../utils/exportUtils';
 import api from '../../services/api';
-import { adaptSekolah, getStorageUrl } from '../../services/adapters';
+import { adaptSekolah, adaptGuru, adaptKelas, adaptFasilitas, getStorageUrl } from '../../services/adapters';
 import StatistikWilayahChart from './StatistikWilayahChart';
 
 // Default detail arrays removed — real data comes from API sekolahDetail endpoint
@@ -93,6 +93,11 @@ export default function PemerintahView({
   const [siswaSearchPemerintah, setSiswaSearchPemerintah] = useState('');
   const [selectedDataPendidikanSchoolId, setSelectedDataPendidikanSchoolId] = useState('all');
 
+  // Monitoring Tab — data loaded from pemerintah API
+  const [monitoringKelas, setMonitoringKelas] = useState([]);
+  const [monitoringGuru, setMonitoringGuru] = useState([]);
+  const [monitoringFasilitas, setMonitoringFasilitas] = useState([]);
+  const [isLoadingMonitoring, setIsLoadingMonitoring] = useState(false);
   // Modal Create Admin Sekolah State
   const [showCreateAdminModal, setShowCreateAdminModal] = useState(false);
   const [adminTargetSchool, setAdminTargetSchool] = useState(null);
@@ -293,6 +298,38 @@ export default function PemerintahView({
 
     fetchPemerintahData();
   }, []);
+
+  // Load monitoring data (kelas, guru, fasilitas) from pemerintah API
+  useEffect(() => {
+    if (activeSubTab !== 'monitoring') return;
+    const fetchMonitoringData = async () => {
+      setIsLoadingMonitoring(true);
+      const params = selectedDataPendidikanSchoolId !== 'all'
+        ? { sekolah_id: selectedDataPendidikanSchoolId }
+        : undefined;
+      try {
+        const [kelasRes, guruRes, fasRes] = await Promise.allSettled([
+          api.pemerintah.getKelas(params),
+          api.pemerintah.getGuru(params),
+          api.pemerintah.getFasilitas(params),
+        ]);
+        if (kelasRes.status === 'fulfilled' && Array.isArray(kelasRes.value)) {
+          setMonitoringKelas(kelasRes.value.map(adaptKelas));
+        }
+        if (guruRes.status === 'fulfilled' && Array.isArray(guruRes.value)) {
+          setMonitoringGuru(guruRes.value.map(adaptGuru));
+        }
+        if (fasRes.status === 'fulfilled' && Array.isArray(fasRes.value)) {
+          setMonitoringFasilitas(fasRes.value.map(adaptFasilitas));
+        }
+      } catch (e) {
+        console.warn('Load monitoring data warning:', e);
+      } finally {
+        setIsLoadingMonitoring(false);
+      }
+    };
+    fetchMonitoringData();
+  }, [activeSubTab, selectedDataPendidikanSchoolId]);
 
   // Compute dynamic stats from DB API response
   const totalSekolahCount = dinasStats?.total_sekolah ?? (schools.length > 0 ? schools.length : (statistikData?.summary?.total_sekolah ?? 0));
@@ -1968,13 +2005,33 @@ export default function PemerintahView({
           {/* ================= TAB 6: DATA PENDIDIKAN (MONITORING) ================= */}
           {activeSubTab === 'monitoring' && (
             <div className="space-y-6 page-transition">
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                  Data Pendidikan Agregat Wilayah
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                  Data siswa, guru, kelas, dan fasilitas dari seluruh sekolah yang terdaftar di Dapodik wilayah.
-                </p>
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                    Data Pendidikan Agregat Wilayah
+                  </h1>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                    Data guru, kelas, dan fasilitas dari seluruh sekolah yang terdaftar di Dapodik wilayah.
+                  </p>
+                </div>
+                {/* Filter by School */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Filter className="w-4 h-4 text-slate-400" />
+                  <select
+                    id="monitoring-school-filter"
+                    value={selectedDataPendidikanSchoolId}
+                    onChange={(e) => setSelectedDataPendidikanSchoolId(e.target.value)}
+                    className="text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 cursor-pointer"
+                  >
+                    <option value="all">Semua Sekolah</option>
+                    {schoolListToDisplay.map((s) => (
+                      <option key={s.id} value={s.id}>{s.nama}</option>
+                    ))}
+                  </select>
+                  {isLoadingMonitoring && (
+                    <span className="text-[11px] text-slate-400 animate-pulse">Memuat...</span>
+                  )}
+                </div>
               </div>
 
               {/* Data Sekolah Section */}
@@ -2019,11 +2076,20 @@ export default function PemerintahView({
                             <button
                               type="button"
                               onClick={() => {
+                                setSelectedDataPendidikanSchoolId(String(s.id));
+                              }}
+                              className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] font-bold transition-colors cursor-pointer mr-1"
+                            >
+                              Filter
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
                                 setSelectedSchoolId(s.id);
                                 handleSelectSchool(s);
                                 setActiveSubTab('sekolah');
                               }}
-                              className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] font-bold transition-colors cursor-pointer"
+                              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[10px] font-bold transition-colors cursor-pointer"
                             >
                               Detail
                             </button>
@@ -2038,47 +2104,50 @@ export default function PemerintahView({
               {/* Data Guru Section */}
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-4 card-interactive">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-
                   <div className="flex items-center gap-2">
                     <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600"><GraduationCap className="w-4 h-4" /></div>
-                    <h2 className="text-base font-bold text-slate-900">Data Guru & Tenaga Pendidik</h2>
-                    <span className="text-[11px] font-semibold px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full">{teachers.length} Guru</span>
+                    <h2 className="text-base font-bold text-slate-900">Data Guru &amp; Tenaga Pendidik</h2>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full">{monitoringGuru.length} Guru</span>
                   </div>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase text-[11px]">
-                        <th className="py-3 px-3">NIP / Nama</th>
-                        <th className="py-3 px-3">Mata Pelajaran</th>
-                        <th className="py-3 px-3">Kelas Ajar</th>
-                        <th className="py-3 px-3">Status</th>
-                        <th className="py-3 px-3">Sertifikasi</th>
-                        <th className="py-3 px-3">Kebutuhan</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {teachers.map((t) => (
-                        <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-3 px-3">
-                            <div className="font-bold text-slate-900">{t.nama}</div>
-                            <span className="text-[11px] text-slate-400 font-mono">NIP: {t.nip}</span>
-                          </td>
-                          <td className="py-3 px-3 text-slate-700 font-medium">{t.mapel}</td>
-                          <td className="py-3 px-3 text-slate-600">{t.kelasAjar.join(', ')}</td>
-                          <td className="py-3 px-3">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
-                              t.statusKepegawaian === 'PNS' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                              t.statusKepegawaian === 'PPPK' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                              'bg-amber-50 text-amber-700 border-amber-200'
-                            }`}>{t.statusKepegawaian}</span>
-                          </td>
-                          <td className="py-3 px-3 text-slate-600 text-[11px]">{t.sertifikasi}</td>
-                          <td className="py-3 px-3 text-slate-700 text-[11px] max-w-[200px] truncate" title={t.kebutuhan}>{t.kebutuhan}</td>
+                  {monitoringGuru.length === 0 && !isLoadingMonitoring ? (
+                    <p className="text-xs text-slate-400 py-4 text-center">Tidak ada data guru untuk filter yang dipilih.</p>
+                  ) : (
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase text-[11px]">
+                          <th className="py-3 px-3">NIP / Nama</th>
+                          <th className="py-3 px-3">Mata Pelajaran</th>
+                          <th className="py-3 px-3">Kelas Ajar</th>
+                          <th className="py-3 px-3">Status</th>
+                          <th className="py-3 px-3">Sertifikasi</th>
+                          <th className="py-3 px-3">Kebutuhan</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {monitoringGuru.map((t) => (
+                          <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-3 px-3">
+                              <div className="font-bold text-slate-900">{t.nama}</div>
+                              <span className="text-[11px] text-slate-400 font-mono">NIP: {t.nip}</span>
+                            </td>
+                            <td className="py-3 px-3 text-slate-700 font-medium">{t.mapel}</td>
+                            <td className="py-3 px-3 text-slate-600">{Array.isArray(t.kelasAjar) ? t.kelasAjar.join(', ') : '-'}</td>
+                            <td className="py-3 px-3">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                                t.statusKepegawaian === 'PNS' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                t.statusKepegawaian === 'PPPK' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                'bg-amber-50 text-amber-700 border-amber-200'
+                              }`}>{t.statusKepegawaian}</span>
+                            </td>
+                            <td className="py-3 px-3 text-slate-600 text-[11px]">{t.sertifikasi}</td>
+                            <td className="py-3 px-3 text-slate-700 text-[11px] max-w-[200px] truncate" title={t.kebutuhan}>{t.kebutuhan}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </div>
 
@@ -2087,54 +2156,47 @@ export default function PemerintahView({
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
                     <div className="p-2 rounded-xl bg-amber-50 text-amber-600"><BookOpen className="w-4 h-4" /></div>
-                    <h2 className="text-base font-bold text-slate-900">Data Kelas & Rombongan Belajar</h2>
-                    <span className="text-[11px] font-semibold px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full">{classes.length} Kelas</span>
+                    <h2 className="text-base font-bold text-slate-900">Data Kelas &amp; Rombongan Belajar</h2>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full">{monitoringKelas.length} Kelas</span>
                   </div>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase text-[11px]">
-                        <th className="py-3 px-3">Nama Kelas</th>
-                        <th className="py-3 px-3">Wali Kelas</th>
-                        <th className="py-3 px-3">Siswa (L/P)</th>
-                        <th className="py-3 px-3">Kehadiran</th>
-                        <th className="py-3 px-3">Ruang</th>
-                        <th className="py-3 px-3">Status</th>
-                        <th className="py-3 px-3 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {classes.map((c) => (
-                        <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-3 px-3 font-bold text-slate-900">{c.nama}</td>
-                          <td className="py-3 px-3 text-slate-700">{c.waliKelas}</td>
-                          <td className="py-3 px-3 text-slate-600">{c.totalSiswa} ({c.lakiLaki}L / {c.perempuan}P)</td>
-                          <td className="py-3 px-3 font-bold text-emerald-600">{c.kehadiranRata}</td>
-                          <td className="py-3 px-3 text-slate-600 text-[11px]">{c.ruang}</td>
-                          <td className="py-3 px-3">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                              c.status === 'Unggul' ? 'bg-emerald-50 text-emerald-700' :
-                              c.status === 'Aktif' ? 'bg-blue-50 text-blue-700' :
-                              'bg-amber-50 text-amber-700'
-                            }`}>{c.status}</span>
-                          </td>
-                          <td className="py-3 px-3 text-right">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSiswaSearchPemerintah(c.nama);
-                                setActiveSubTab('monitoring');
-                              }}
-                              className="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-xl text-[10px] font-bold transition-colors cursor-pointer"
-                            >
-                              Detail Siswa
-                            </button>
-                          </td>
+                  {monitoringKelas.length === 0 && !isLoadingMonitoring ? (
+                    <p className="text-xs text-slate-400 py-4 text-center">Tidak ada data kelas untuk filter yang dipilih.</p>
+                  ) : (
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase text-[11px]">
+                          <th className="py-3 px-3">Nama Kelas</th>
+                          <th className="py-3 px-3">Sekolah</th>
+                          <th className="py-3 px-3">Wali Kelas</th>
+                          <th className="py-3 px-3">Siswa (L/P)</th>
+                          <th className="py-3 px-3">Kehadiran</th>
+                          <th className="py-3 px-3">Ruang</th>
+                          <th className="py-3 px-3">Status</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {monitoringKelas.map((c) => (
+                          <tr key={c.dbId || c.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-3 px-3 font-bold text-slate-900">{c.nama}</td>
+                            <td className="py-3 px-3 text-slate-500 text-[11px]">{c.sekolahNama}</td>
+                            <td className="py-3 px-3 text-slate-700">{c.waliKelas}</td>
+                            <td className="py-3 px-3 text-slate-600">{c.totalSiswa} ({c.lakiLaki}L / {c.perempuan}P)</td>
+                            <td className="py-3 px-3 font-bold text-emerald-600">{c.kehadiranRata}</td>
+                            <td className="py-3 px-3 text-slate-600 text-[11px]">{c.ruang}</td>
+                            <td className="py-3 px-3">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                                c.status === 'Unggul' ? 'bg-emerald-50 text-emerald-700' :
+                                c.status === 'Aktif' ? 'bg-blue-50 text-blue-700' :
+                                'bg-amber-50 text-amber-700'
+                              }`}>{c.status}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </div>
 
@@ -2143,35 +2205,41 @@ export default function PemerintahView({
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
                     <div className="p-2 rounded-xl bg-rose-50 text-rose-600"><AlertTriangle className="w-4 h-4" /></div>
-                    <h2 className="text-base font-bold text-slate-900">Fasilitas & Sarana Prasarana Sekolah</h2>
-                    <span className="text-[11px] font-semibold px-2 py-0.5 bg-rose-50 text-rose-700 rounded-full">{facilities.length} Fasilitas</span>
+                    <h2 className="text-base font-bold text-slate-900">Fasilitas &amp; Sarana Prasarana Sekolah</h2>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 bg-rose-50 text-rose-700 rounded-full">{monitoringFasilitas.length} Fasilitas</span>
                   </div>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase text-[11px]">
-                        <th className="py-3 px-3">Nama Fasilitas</th>
-                        <th className="py-3 px-3">Lokasi</th>
-                        <th className="py-3 px-3">Kondisi</th>
-                        <th className="py-3 px-3">Baik / Rusak</th>
-                        <th className="py-3 px-3">Kebutuhan Tambahan</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {facilities.map((f) => (
-                        <tr key={f.id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-3 px-3 font-bold text-slate-900">{f.nama}</td>
-                          <td className="py-3 px-3 text-slate-600">{f.lokasi}</td>
-                          <td className="py-3 px-3">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${f.kondisiBadge}`}>{f.kondisi}</span>
-                          </td>
-                          <td className="py-3 px-3 text-slate-700">{f.jumlahBaik} Baik / <span className="text-rose-600 font-bold">{f.jumlahRusak} Rusak</span></td>
-                          <td className="py-3 px-3 text-slate-700 text-[11px] max-w-[250px]">{f.kebutuhanTambahan}</td>
+                  {monitoringFasilitas.length === 0 && !isLoadingMonitoring ? (
+                    <p className="text-xs text-slate-400 py-4 text-center">Tidak ada data fasilitas untuk filter yang dipilih.</p>
+                  ) : (
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase text-[11px]">
+                          <th className="py-3 px-3">Nama Fasilitas</th>
+                          <th className="py-3 px-3">Sekolah</th>
+                          <th className="py-3 px-3">Lokasi</th>
+                          <th className="py-3 px-3">Kondisi</th>
+                          <th className="py-3 px-3">Baik / Rusak</th>
+                          <th className="py-3 px-3">Kebutuhan Tambahan</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {monitoringFasilitas.map((f) => (
+                          <tr key={f.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-3 px-3 font-bold text-slate-900">{f.nama}</td>
+                            <td className="py-3 px-3 text-slate-500 text-[11px]">{f.sekolahNama}</td>
+                            <td className="py-3 px-3 text-slate-600">{f.lokasi}</td>
+                            <td className="py-3 px-3">
+                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${f.kondisiBadge}`}>{f.kondisi}</span>
+                            </td>
+                            <td className="py-3 px-3 text-slate-700">{f.jumlahBaik} Baik / <span className="text-rose-600 font-bold">{f.jumlahRusak} Rusak</span></td>
+                            <td className="py-3 px-3 text-slate-700 text-[11px] max-w-[250px]">{f.kebutuhanTambahan}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </div>
             </div>

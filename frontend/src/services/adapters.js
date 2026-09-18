@@ -110,8 +110,11 @@ export const adaptFasilitas = (f) => ({
   jumlahRusak: f.jumlah_rusak || 0,
   keterangan: f.keterangan || '',
   kebutuhanTambahan: f.kebutuhan_tambahan || '',
-  terakhirCek: f.terakhir_cek || '-'
+  terakhirCek: f.terakhir_cek || '-',
+  sekolahNama: f.sekolah ? f.sekolah.nama : '',
+  sekolahId: f.sekolah_id
 });
+
 
 export const getStorageUrl = (url) => {
   if (!url) return null;
@@ -234,6 +237,7 @@ export const adaptSekolah = (sch) => ({
   akreditasi: sch.akreditasi || 'A',
   totalSiswa: sch.total_siswa || (sch.siswas ? sch.siswas.length : 0),
   totalGuru: sch.total_guru || (sch.gurus ? sch.gurus.length : 0),
+  totalKelas: sch.total_kelas || (sch.kelasList ? sch.kelasList.length : 0),
   kondisiFasilitas: sch.kondisi_fasilitas || sch.status_fasilitas || 'Baik',
   statusPrioritas: sch.status_prioritas || (sch.kondisi_fasilitas === 'Rusak Berat' ? 'Prioritas 1 (Kritis)' : 'Standar'),
   usulanTerbaru: sch.usulan_terbaru || 'Pengajuan Perangkat TIK & Sanitasi',
@@ -248,3 +252,4 @@ export const adaptSekolah = (sch) => ({
     email: sch.admin_account.email
   } : null)
 });
+

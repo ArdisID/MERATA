@@ -235,9 +235,18 @@ class ApiService {
       const q = params ? `?${new URLSearchParams(params)}` : '';
       return this.request(`/pemerintah/siswa${q}`);
     },
-    getGuru: () => this.request('/pemerintah/guru'),
-    getKelas: () => this.request('/pemerintah/kelas'),
-    getFasilitas: () => this.request('/pemerintah/fasilitas'),
+    getGuru: (params) => {
+      const q = params ? `?${new URLSearchParams(params)}` : '';
+      return this.request(`/pemerintah/guru${q}`);
+    },
+    getKelas: (params) => {
+      const q = params ? `?${new URLSearchParams(params)}` : '';
+      return this.request(`/pemerintah/kelas${q}`);
+    },
+    getFasilitas: (params) => {
+      const q = params ? `?${new URLSearchParams(params)}` : '';
+      return this.request(`/pemerintah/fasilitas${q}`);
+    },
     getMateri: () => this.request('/pemerintah/materi'),
     createMateri: (payload) => this.request('/pemerintah/materi', {
       method: 'POST',
