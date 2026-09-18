@@ -29,8 +29,10 @@ class KelasJadwalSeeder extends Seeder
                 ['nama' => '7B', 'tingkat' => '7', 'ruang' => 'Gedung A - Lt. 1 Ruang 102', 'wali' => $guruBambang],
                 ['nama' => '8A', 'tingkat' => '8', 'ruang' => 'Gedung B - Lt. 2 Ruang 201', 'wali' => $guruDewi],
                 ['nama' => '8B', 'tingkat' => '8', 'ruang' => 'Gedung B - Lt. 2 Ruang 202', 'wali' => $guruDewi],
+                ['nama' => '8C', 'tingkat' => '8', 'ruang' => 'Gedung B - Lt. 2 Ruang 203', 'wali' => $guruBambang],
                 ['nama' => '9A', 'tingkat' => '9', 'ruang' => 'Gedung C - Lt. 3 Ruang 301', 'wali' => $guruBudi],
                 ['nama' => '9B', 'tingkat' => '9', 'ruang' => 'Gedung C - Lt. 3 Ruang 302', 'wali' => $guruBambang],
+                ['nama' => '9C', 'tingkat' => '9', 'ruang' => 'Gedung C - Lt. 3 Ruang 303', 'wali' => $guruDewi],
             ];
 
             foreach ($smpClasses as $idx => $sc) {

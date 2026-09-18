@@ -82,10 +82,10 @@ export const adaptKelas = (k) => ({
   tingkat: k.tingkat,
   nama: k.nama,
   ruang: k.ruang || `Gedung ${k.nama}`,
-  waliKelas: k.wali_kelas || '-',
-  totalSiswa: k.total_siswa || (k.siswas ? k.siswas.length : 36),
-  lakiLaki: k.laki_laki || 18,
-  perempuan: k.perempuan || 18,
+  waliKelas: k.wali_kelas_nama || k.wali_kelas || (k.wali ? k.wali.nama : '-'),
+  totalSiswa: k.total_siswa || (k.siswas ? k.siswas.length : 0),
+  lakiLaki: k.laki_laki || 0,
+  perempuan: k.perempuan || 0,
   kehadiranRata: k.kehadiran_rata || '95.0%',
   status: k.status || 'Aktif',
   jadwal: Array.isArray(k.jadwals) ? k.jadwals.map(j => ({
@@ -93,7 +93,9 @@ export const adaptKelas = (k) => ({
     jam: j.jam,
     mapel: j.mapel,
     guru: j.guru
-  })) : []
+  })) : [],
+  sekolahNama: k.sekolah ? k.sekolah.nama : '',
+  sekolahId: k.sekolah_id
 });
 
 export const adaptFasilitas = (f) => ({

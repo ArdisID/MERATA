@@ -31,8 +31,10 @@ class SiswaSeeder extends Seeder
             $kls7b = Kelas::where('sekolah_id', $smp1->id)->where('nama', '7B')->first();
             $kls8a = Kelas::where('sekolah_id', $smp1->id)->where('nama', '8A')->first();
             $kls8b = Kelas::where('sekolah_id', $smp1->id)->where('nama', '8B')->first();
+            $kls8c = Kelas::where('sekolah_id', $smp1->id)->where('nama', '8C')->first();
             $kls9a = Kelas::where('sekolah_id', $smp1->id)->where('nama', '9A')->first();
             $kls9b = Kelas::where('sekolah_id', $smp1->id)->where('nama', '9B')->first();
+            $kls9c = Kelas::where('sekolah_id', $smp1->id)->where('nama', '9C')->first();
 
             $students = [
                 // Kelas 7A
@@ -50,12 +52,20 @@ class SiswaSeeder extends Seeder
                 // Kelas 8B
                 ['nisn' => '0089123423', 'nama' => 'Rendi Satria',            'gender' => 'Laki-laki',  'kelas_id' => $kls8b?->id, 'kelas_nama' => '8B', 'kehadiran' => 88, 'status_kehadiran' => 'Baik',               'nilai_rata_rata' => 79.5, 'status_bantuan' => 'Belum Ada',         'kebutuhan' => 'Laptop untuk tugas',                        'catatan' => 'Aktif di ekskul futsal.'],
                 ['nisn' => '0089123424', 'nama' => 'Dewi Ratnasari',          'gender' => 'Perempuan',  'kelas_id' => $kls8b?->id, 'kelas_nama' => '8B', 'kehadiran' => 97, 'status_kehadiran' => 'Baik',               'nilai_rata_rata' => 90.0, 'status_bantuan' => 'Beasiswa Prestasi', 'kebutuhan' => 'Kacamata baca',                             'catatan' => 'Juara olimpiade IPA tingkat kota.'],
+                // Kelas 8C
+                ['nisn' => '0089123425', 'nama' => 'Bagas Firmansyah',        'gender' => 'Laki-laki',  'kelas_id' => $kls8c?->id, 'kelas_nama' => '8C', 'kehadiran' => 91, 'status_kehadiran' => 'Baik',               'nilai_rata_rata' => 83.0, 'status_bantuan' => 'Belum Ada',         'kebutuhan' => 'Buku Latihan Matematika',                   'catatan' => 'Aktif di ekskul basket.'],
+                ['nisn' => '0089123426', 'nama' => 'Putri Ramadhani',          'gender' => 'Perempuan',  'kelas_id' => $kls8c?->id, 'kelas_nama' => '8C', 'kehadiran' => 94, 'status_kehadiran' => 'Baik',               'nilai_rata_rata' => 88.5, 'status_bantuan' => 'Penerima KIP',      'kebutuhan' => 'Seragam & Tas Sekolah',                     'catatan' => 'Aktif di pramuka sekolah.'],
+                ['nisn' => '0089123427', 'nama' => 'Rizal Akhmad Fauzi',       'gender' => 'Laki-laki',  'kelas_id' => $kls8c?->id, 'kelas_nama' => '8C', 'kehadiran' => 76, 'status_kehadiran' => 'Perhatian Khusus',   'nilai_rata_rata' => 71.5, 'status_bantuan' => 'Penerima KIP',      'kebutuhan' => 'Konseling & pendampingan',                  'catatan' => 'Perlu perhatian khusus kehadiran.'],
                 // Kelas 9A
                 ['nisn' => '0089123430', 'nama' => 'Mahendra Wijaya',         'gender' => 'Laki-laki',  'kelas_id' => $kls9a?->id, 'kelas_nama' => '9A', 'kehadiran' => 99, 'status_kehadiran' => 'Baik',               'nilai_rata_rata' => 93.5, 'status_bantuan' => 'Beasiswa Prestasi', 'kebutuhan' => 'Buku Persiapan UN',                         'catatan' => 'Target masuk SMAN 1 Jakarta.'],
                 ['nisn' => '0089123431', 'nama' => 'Tiara Putri Anastasia',   'gender' => 'Perempuan',  'kelas_id' => $kls9a?->id, 'kelas_nama' => '9A', 'kehadiran' => 95, 'status_kehadiran' => 'Baik',               'nilai_rata_rata' => 89.5, 'status_bantuan' => 'Penerima KIP',      'kebutuhan' => 'Buku Latihan Soal UN & Try Out',            'catatan' => 'Aktif bimbel mandiri.'],
                 // Kelas 9B
                 ['nisn' => '0089123432', 'nama' => 'Arief Budiman',           'gender' => 'Laki-laki',  'kelas_id' => $kls9b?->id, 'kelas_nama' => '9B', 'kehadiran' => 84, 'status_kehadiran' => 'Perhatian Khusus',   'nilai_rata_rata' => 72.0, 'status_bantuan' => 'Penerima KIP',      'kebutuhan' => 'Pendampingan belajar & alat tulis',         'catatan' => 'Perlu perhatian ekstra untuk UN.'],
                 ['nisn' => '0089123433', 'nama' => 'Layla Syafira Hasanah',   'gender' => 'Perempuan',  'kelas_id' => $kls9b?->id, 'kelas_nama' => '9B', 'kehadiran' => 98, 'status_kehadiran' => 'Baik',               'nilai_rata_rata' => 95.0, 'status_bantuan' => 'Beasiswa Prestasi', 'kebutuhan' => 'Persiapan Lomba Peneliti Remaja',           'catatan' => 'Finalis LKIR tingkat Provinsi.'],
+                // Kelas 9C
+                ['nisn' => '0089123434', 'nama' => 'Guntur Prasetyo',          'gender' => 'Laki-laki',  'kelas_id' => $kls9c?->id, 'kelas_nama' => '9C', 'kehadiran' => 90, 'status_kehadiran' => 'Baik',               'nilai_rata_rata' => 82.0, 'status_bantuan' => 'Belum Ada',         'kebutuhan' => 'Buku Tryout & Referensi UN',                'catatan' => 'Minat tinggi di bidang teknik.'],
+                ['nisn' => '0089123435', 'nama' => 'Anggun Setiawati',         'gender' => 'Perempuan',  'kelas_id' => $kls9c?->id, 'kelas_nama' => '9C', 'kehadiran' => 97, 'status_kehadiran' => 'Baik',               'nilai_rata_rata' => 91.0, 'status_bantuan' => 'Beasiswa Prestasi', 'kebutuhan' => 'Buku Olimpiade IPS',                        'catatan' => 'Juara debat tingkat kecamatan.'],
+                ['nisn' => '0089123436', 'nama' => 'Habib Ridwan Faturohman',  'gender' => 'Laki-laki',  'kelas_id' => $kls9c?->id, 'kelas_nama' => '9C', 'kehadiran' => 79, 'status_kehadiran' => 'Perhatian Khusus',   'nilai_rata_rata' => 70.0, 'status_bantuan' => 'Penerima KIP',      'kebutuhan' => 'Pendampingan intensif persiapan UN',        'catatan' => 'Butuh bimbingan ekstra menjelang UN.'],
             ];
 
             foreach ($students as $idx => $st) {
