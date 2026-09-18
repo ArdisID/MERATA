@@ -92,6 +92,19 @@ export default function GuruProfilView({
         avatar: profileForm.avatar,
       }));
     }
+
+    try {
+      await api.guru.updateProfil({
+        nama: profileForm.nama,
+        nip: profileForm.nip,
+        mapel: profileForm.mapel,
+        sertifikasi: profileForm.sertifikasi,
+        avatar: profileForm.avatar,
+      });
+    } catch (e) {
+      console.warn('Update profil failed', e);
+    }
+
     setIsEditingProfileModal(false);
     showToast('Profil Pendidik berhasil diperbarui!');
   };
@@ -230,6 +243,20 @@ export default function GuruProfilView({
         lampiran: uploadedFile?.filename || 'Proposal_Kebutuhan.pdf',
         lampiranUrl: uploadedFile?.url || null,
       });
+    }
+
+    try {
+      await api.guru.createKebutuhan({
+        judul: newNeed.judul,
+        kategori: newNeed.kategori,
+        urgensi: newNeed.urgensi,
+        estimasi_biaya: newNeed.biaya,
+        justifikasi: newNeed.keterangan,
+        lampiran: uploadedFile?.filename,
+        bukti_url: uploadedFile?.url
+      });
+    } catch (e) {
+      console.warn('Create kebutuhan failed', e);
     }
 
     setIsFormOpen(false);

@@ -140,6 +140,10 @@ class ApiService {
       body: payload
     }),
     getProfil: () => this.request('/guru/profil'),
+    updateProfil: (payload) => this.request('/guru/profil', {
+      method: 'PUT',
+      body: payload
+    }),
     createKebutuhan: (payload) => this.request('/guru/kebutuhan', {
       method: 'POST',
       body: payload

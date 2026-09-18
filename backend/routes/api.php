@@ -54,6 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Profil & Kebutuhan
         Route::get('/profil', [GuruController::class, 'profil']);
+        Route::put('/profil', [GuruController::class, 'updateProfil']);
         Route::post('/kebutuhan', [GuruController::class, 'storeKebutuhan']);
         Route::put('/kebutuhan/{id}', [GuruController::class, 'updateKebutuhan']);
         Route::delete('/kebutuhan/{id}', [GuruController::class, 'deleteKebutuhan']);

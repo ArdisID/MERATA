@@ -607,42 +607,51 @@ export default function KebutuhanBantuanView({
                   placeholder="Tambahkan catatan persetujuan, alasan revisi, atau instruksi anggaran..."
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl leading-relaxed text-xs focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  disabled={selectedVerification.status !== 'menunggu'}
+                  className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl leading-relaxed text-xs focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500"
                 />
               </div>
 
               <div className="pt-2 grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleApproveSchool(selectedVerification.id)}
-                  className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
-                >
-                  ✓ Setujui (BOS/RKAS)
-                </button>
+                {selectedVerification.status === 'menunggu' ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleApproveSchool(selectedVerification.id)}
+                      className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
+                    >
+                      ✓ Setujui (BOS/RKAS)
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={() => handleForwardToPemda(selectedVerification.id)}
-                  className="py-2.5 px-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
-                >
-                  🏛️ Teruskan ke Pemda
-                </button>
+                    <button
+                      type="button"
+                      onClick={() => handleForwardToPemda(selectedVerification.id)}
+                      className="py-2.5 px-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
+                    >
+                      🏛️ Teruskan ke Pemda
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={() => handleRequestRevision(selectedVerification.id)}
-                  className="py-2 px-3 bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold text-xs rounded-xl border border-amber-200 transition-colors cursor-pointer"
-                >
-                  ⚠️ Minta Revisi Data
-                </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRequestRevision(selectedVerification.id)}
+                      className="py-2 px-3 bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold text-xs rounded-xl border border-amber-200 transition-colors cursor-pointer"
+                    >
+                      ⚠️ Minta Revisi Data
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={() => handleReject(selectedVerification.id)}
-                  className="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-800 font-semibold text-xs rounded-xl border border-rose-200 transition-colors cursor-pointer"
-                >
-                  ✗ Tolak Pengajuan
-                </button>
+                    <button
+                      type="button"
+                      onClick={() => handleReject(selectedVerification.id)}
+                      className="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-800 font-semibold text-xs rounded-xl border border-rose-200 transition-colors cursor-pointer"
+                    >
+                      ✗ Tolak Pengajuan
+                    </button>
+                  </>
+                ) : (
+                  <div className="col-span-2 text-center text-xs font-semibold text-slate-500 p-2 bg-slate-50 rounded-xl border border-slate-200">
+                    Pengajuan ini sudah diproses dan tidak dapat diubah kembali.
+                  </div>
+                )}
               </div>
             </div>
           </div>

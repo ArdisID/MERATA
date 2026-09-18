@@ -310,6 +310,27 @@ class GuruController extends Controller
     }
 
     /**
+     * Update teacher profile.
+     * PUT /api/guru/profil
+     */
+    public function updateProfil(Request $request)
+    {
+        $guru = $request->user()->guru;
+        if (!$guru) {
+            return response()->json(['message' => 'Profil guru tidak ditemukan.'], 404);
+        }
+
+        $guru->update($request->only([
+            'nama', 'nip', 'mapel', 'sertifikasi', 'avatar'
+        ]));
+
+        return response()->json([
+            'message' => 'Profil berhasil diperbarui.',
+            'profil' => $guru->fresh()
+        ]);
+    }
+
+    /**
      * Submit a new need from guru.
      * POST /api/guru/kebutuhan
      */

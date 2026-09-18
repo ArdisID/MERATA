@@ -171,15 +171,19 @@ export default function App() {
           setSchoolProfile((prev) => adaptSchoolProfile(dashData, prev));
         }
       } else if (role === 'pemerintah') {
-        const [siswaRes, kebutuhanRes] = await Promise.allSettled([
+        const [siswaRes, kebutuhanRes, kelasRes] = await Promise.allSettled([
           api.pemerintah.getSiswa(),
-          api.pemerintah.getKebutuhan()
+          api.pemerintah.getKebutuhan(),
+          api.pemerintah.getKelas()
         ]);
         if (siswaRes.status === 'fulfilled' && Array.isArray(siswaRes.value)) {
           setStudents(siswaRes.value.map(adaptSiswa));
         }
         if (kebutuhanRes.status === 'fulfilled' && Array.isArray(kebutuhanRes.value)) {
           setVerifications(kebutuhanRes.value.map(adaptVerifikasi));
+        }
+        if (kelasRes.status === 'fulfilled' && Array.isArray(kelasRes.value)) {
+          setClasses(kelasRes.value.map(adaptKelas));
         }
       }
     } catch (err) {

@@ -1977,73 +1977,56 @@ export default function PemerintahView({
                 </p>
               </div>
 
-              {/* Data Siswa Section */}
+              {/* Data Sekolah Section */}
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-4 card-interactive">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-xl bg-blue-50 text-blue-600"><Users className="w-4 h-4" /></div>
-                    <h2 className="text-base font-bold text-slate-900">Data Siswa</h2>
+                    <div className="p-2 rounded-xl bg-blue-50 text-blue-600"><School className="w-4 h-4" /></div>
+                    <h2 className="text-base font-bold text-slate-900">Data Sekolah</h2>
                     <span className="text-[11px] font-semibold px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full">
-                      {filteredDataPendidikanStudents.length} Siswa Terdata
+                      {schoolListToDisplay.length} Sekolah Terdata
                     </span>
-                  </div>
-
-                  {/* Search Bar for Siswa: NISN / Nama / Asal Sekolah */}
-                  <div className="relative w-full sm:w-80">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      value={siswaSearchPemerintah}
-                      onChange={(e) => setSiswaSearchPemerintah(e.target.value)}
-                      placeholder="Cari NISN, Nama, atau Asal Sekolah..."
-                      className="w-full pl-8 pr-7 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-800"
-                    />
-                    {siswaSearchPemerintah && (
-                      <button
-                        type="button"
-                        onClick={() => setSiswaSearchPemerintah('')}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    )}
                   </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
                       <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase text-[11px]">
-                        <th className="py-3 px-3">NISN / Nama</th>
-                        <th className="py-3 px-3">Asal Sekolah</th>
-                        <th className="py-3 px-3">Kelas</th>
-                        <th className="py-3 px-3">Kehadiran</th>
-                        <th className="py-3 px-3">Nilai Rata-rata</th>
-                        <th className="py-3 px-3">Status Bantuan</th>
-                        <th className="py-3 px-3">Perhatian</th>
+                        <th className="py-3 px-3">Nama Sekolah</th>
+                        <th className="py-3 px-3">Total Kelas</th>
+                        <th className="py-3 px-3">Akreditasi</th>
+                        <th className="py-3 px-3">Alamat / Wilayah</th>
+                        <th className="py-3 px-3 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {filteredDataPendidikanStudents.map((s) => (
+                      {schoolListToDisplay.map((s) => (
                         <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
                           <td className="py-3 px-3">
                             <div className="font-bold text-slate-900">{s.nama}</div>
-                            <span className="text-[11px] text-slate-400 font-mono">NISN: {s.nisn}</span>
+                            <span className="text-[11px] text-slate-400 font-mono">NPSN: {s.npsn}</span>
                           </td>
                           <td className="py-3 px-3 font-semibold text-slate-800">
-                            {s.asalSekolah || s.sekolah?.nama || 'SMP Negeri 1 Merata Jakarta'}
-                          </td>
-                          <td className="py-3 px-3 text-slate-600">{s.kelas}</td>
-                          <td className="py-3 px-3">
-                            <span className={`font-bold ${s.kehadiran < 80 ? 'text-rose-600' : 'text-emerald-600'}`}>{s.kehadiran}%</span>
-                          </td>
-                          <td className="py-3 px-3 font-bold text-slate-800">{s.nilaiRataRata}</td>
-                          <td className="py-3 px-3">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${s.bantuanBadge}`}>{s.statusBantuan}</span>
+                            {s.totalKelas || 0} Kelas
                           </td>
                           <td className="py-3 px-3">
-                            <span className={`text-[10px] font-bold ${s.statusKehadiran === 'Perhatian Khusus' ? 'text-rose-600' : 'text-emerald-600'}`}>
-                              {s.statusKehadiran === 'Perhatian Khusus' ? '⚠️ Pantau' : '✓ Baik'}
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                              {s.akreditasi || 'Belum Terakreditasi'}
                             </span>
+                          </td>
+                          <td className="py-3 px-3 text-slate-600">{s.wilayah}</td>
+                          <td className="py-3 px-3 text-right">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedSchoolId(s.id);
+                                handleSelectSchool(s);
+                                setActiveSubTab('sekolah');
+                              }}
+                              className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] font-bold transition-colors cursor-pointer"
+                            >
+                              Detail
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -2117,6 +2100,7 @@ export default function PemerintahView({
                         <th className="py-3 px-3">Kehadiran</th>
                         <th className="py-3 px-3">Ruang</th>
                         <th className="py-3 px-3">Status</th>
+                        <th className="py-3 px-3 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -2133,6 +2117,18 @@ export default function PemerintahView({
                               c.status === 'Aktif' ? 'bg-blue-50 text-blue-700' :
                               'bg-amber-50 text-amber-700'
                             }`}>{c.status}</span>
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSiswaSearchPemerintah(c.nama);
+                                setActiveSubTab('monitoring');
+                              }}
+                              className="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-xl text-[10px] font-bold transition-colors cursor-pointer"
+                            >
+                              Detail Siswa
+                            </button>
                           </td>
                         </tr>
                       ))}
