@@ -2035,8 +2035,9 @@ export default function PemerintahView({
                 </div>
               </div>
 
-            </div>
-          )}
+              {/* Data Guru Section */}
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-4 card-interactive">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
 
                   <div className="flex items-center gap-2">
                     <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600"><GraduationCap className="w-4 h-4" /></div>
