@@ -330,10 +330,6 @@ class GuruController extends Controller
         ]);
     }
 
-    /**
-     * Submit a new need from guru.
-     * POST /api/guru/kebutuhan
-     */
     public function storeKebutuhan(Request $request)
     {
         $request->validate([
@@ -348,11 +344,14 @@ class GuruController extends Controller
             return response()->json(['message' => 'Profil guru tidak ditemukan.'], 404);
         }
 
+        $totalTnd = Kebutuhan::where('tipe', 'kebutuhan_guru')->count() + 1;
+        $totalVrf = Kebutuhan::whereIn('tipe', ['verifikasi', 'kebutuhan_siswa'])->count() + 1;
+
         // Create teacher's own tracking record
         $kebutuhanGuru = Kebutuhan::create([
             'sekolah_id' => $guru->sekolah_id,
             'guru_id' => $guru->id,
-            'kode' => 'TND-' . str_pad(Kebutuhan::where('tipe', 'kebutuhan_guru')->count() + 1, 2, '0', STR_PAD_LEFT),
+            'kode' => 'TND-' . str_pad($totalTnd, 2, '0', STR_PAD_LEFT),
             'judul' => $request->judul,
             'kategori' => $request->kategori,
             'tanggal' => now()->format('d M Y'),
@@ -373,7 +372,7 @@ class GuruController extends Controller
         $verifikasi = Kebutuhan::create([
             'sekolah_id' => $guru->sekolah_id,
             'guru_id' => $guru->id,
-            'kode' => 'VRF-' . str_pad(Kebutuhan::where('tipe', 'verifikasi')->count() + 1, 3, '0', STR_PAD_LEFT),
+            'kode' => 'VRF-' . str_pad($totalVrf, 3, '0', STR_PAD_LEFT),
             'judul' => $request->judul,
             'kategori' => $request->kategori,
             'pemohon' => $guru->nama,
