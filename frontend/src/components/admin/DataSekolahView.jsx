@@ -486,7 +486,7 @@ export default function DataSekolahView({
   };
 
   // Handle Save / Submit Maintenance for Facility
-  const handleSaveMaintenance = (e) => {
+  const handleSaveMaintenance = async (e) => {
     e.preventDefault();
     if (!maintenanceFacility) return;
 
@@ -522,7 +522,7 @@ export default function DataSekolahView({
     // Backend Sync
     try {
       const dbId = updated.dbId || parseInt(String(updated.id).replace('FAS-', ''), 10) || 1;
-      api.admin.updateFasilitas(dbId, {
+      const res = await api.admin.updateFasilitas(dbId, {
         nama: updated.nama,
         lokasi: updated.lokasi,
         kondisi: updated.kondisi,
@@ -533,7 +533,13 @@ export default function DataSekolahView({
         keterangan: updated.keterangan,
         kebutuhan_tambahan: updated.kebutuhanTambahan,
         terakhir_cek: new Date().toISOString().split('T')[0],
-      }).catch((err) => console.warn('Sync update facility warning:', err));
+      });
+      
+      if (res?.verifikasi && setVerifications) {
+        import('../../services/adapters').then(({ adaptVerifikasi }) => {
+           setVerifications(prev => [adaptVerifikasi(res.verifikasi), ...prev]);
+        });
+      }
     } catch (err) {
       console.warn('Sync update facility error:', err);
     }

@@ -500,6 +500,7 @@ export default function App() {
                   setFacilities={setFacilities}
                   globalSearch={globalSearch}
                   schoolProfile={schoolProfile}
+                  setVerifications={setVerifications}
                 />
               )}
 

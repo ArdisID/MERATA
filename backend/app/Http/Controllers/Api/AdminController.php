@@ -247,9 +247,32 @@ class AdminController extends Controller
             'terakhir_cek',
         ]));
 
+        $verifikasi = null;
+        // Jika ada pengajuan kebutuhan tambahan (pemeliharaan)
+        if ($request->filled('kebutuhan_tambahan')) {
+            $totalVrf = \App\Models\Kebutuhan::whereIn('tipe', ['verifikasi', 'kebutuhan_siswa'])->count() + 1;
+            
+            $verifikasi = \App\Models\Kebutuhan::create([
+                'sekolah_id' => $sekolahId,
+                'kode' => 'VRF-' . str_pad($totalVrf, 3, '0', STR_PAD_LEFT),
+                'judul' => 'Pemeliharaan: ' . $fasilitas->nama,
+                'kategori' => 'Pemeliharaan Sarpras',
+                'pemohon' => 'Admin Sekolah',
+                'peran_pemohon' => 'Operator Sekolah',
+                'tanggal' => now()->format('d M Y'),
+                'urgensi' => $fasilitas->kondisi === 'Rusak Berat' ? 'Mendesak' : ($fasilitas->kondisi === 'Rusak Ringan' ? 'Sedang' : 'Rendah'),
+                'estimasi_biaya' => 'Dalam Estimasi',
+                'justifikasi' => $request->keterangan . "\n\nKebutuhan Tambahan: " . $request->kebutuhan_tambahan,
+                'status' => 'menunggu',
+                'status_label' => 'Menunggu Verifikasi',
+                'tipe' => 'verifikasi',
+            ]);
+        }
+
         return response()->json([
             'message' => 'Data fasilitas berhasil diperbarui.',
             'fasilitas' => $fasilitas->fresh(),
+            'verifikasi' => $verifikasi,
         ]);
     }
 
